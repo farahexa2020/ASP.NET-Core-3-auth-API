@@ -19,6 +19,7 @@ using WebApp1.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebApp1.Core.Models;
 
 namespace WebApp1
 {
@@ -39,32 +40,48 @@ namespace WebApp1
       services.AddDbContext<DataDbContext>(options =>
           options.UseSqlServer(
               Configuration.GetConnectionString("DefaultConnection")));
-      services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+
+      // options => options.SignIn.RequireConfirmedAccount = true
+      services.AddIdentity<User, IdentityRole>()
           .AddEntityFrameworkStores<DataDbContext>();
 
-      // services.AddAuthentication(options =>
-      //       {
-      //         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-      //         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+      services.Configure<IdentityOptions>(options =>
+      {
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequiredLength = 8;
+        options.Password.RequiredUniqueChars = 1;
+      });
 
-      //       }).AddJwtBearer(options =>
-      //       {
-      //         options.TokenValidationParameters = new TokenValidationParameters
-      //         {
-      //           RequireExpirationTime = true,
-      //           ValidateLifetime = true,
-      //           ValidateIssuerSigningKey = true,
-      //           ValidateIssuer = true,
-      //           ValidateAudience = true,
-      //           ValidIssuer = Configuration["Token:Issuer"],
-      //           ValidAudience = Configuration["Token:Audience"],
-      //           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Token:Key"]))
-      //         };
-      //       });
+      services.AddAuthentication(options =>
+            {
+              options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+              options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(options =>
+            {
+              options.TokenValidationParameters = new TokenValidationParameters
+              {
+                RequireExpirationTime = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidIssuer = Configuration["Token:Issuer"],
+                ValidAudience = Configuration["Token:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Token:Key"]))
+              };
+            });
 
       services.AddAutoMapper(typeof(Startup));
 
       services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+      services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+      services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
       services.AddScoped<IBankRepository, BankRepository>();
     }

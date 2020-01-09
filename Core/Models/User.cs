@@ -10,6 +10,6 @@ namespace WebApp1.Core.Models
 
     [Required]
     [EmailAddress]
-    public string LastEmail { get; set; }
+    public string LastName { get; set; }
   }
 }

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WebApp1.Controllers.Resources
 {
-  public class UserResource
+  public class RegisterUserResource
   {
     [Required]
     [StringLength(255)]
@@ -17,7 +17,7 @@ namespace WebApp1.Controllers.Resources
     public string Email { get; set; }
 
     [Required]
-    [StringLength(255, MinimumLength = 6)]
+    [StringLength(255, MinimumLength = 8)]
     public string Password { get; set; }
   }
 }
