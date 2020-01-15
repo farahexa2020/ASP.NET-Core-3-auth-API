@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WebApp1.Core.Models;
+using WebApp1.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApp1
 {
@@ -42,7 +44,7 @@ namespace WebApp1
               Configuration.GetConnectionString("DefaultConnection")));
 
       // options => options.SignIn.RequireConfirmedAccount = true
-      services.AddIdentity<User, IdentityRole>()
+      services.AddIdentity<ApplicationUser, ApplicationRole>()
           .AddEntityFrameworkStores<DataDbContext>();
 
       services.Configure<IdentityOptions>(options =>
@@ -71,9 +73,22 @@ namespace WebApp1
                 ValidateAudience = true,
                 ValidIssuer = Configuration["Token:Issuer"],
                 ValidAudience = Configuration["Token:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Token:Key"]))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Token:Key"])),
+                ClockSkew = TimeSpan.Zero
               };
             });
+
+      services.AddAuthorization(options =>
+      {
+        options.AddPolicy("AdminPolicy",
+                          policy => policy.RequireRole(Roles.Admin.ToString()));
+
+        options.AddPolicy("EditRolePolicy",
+                          policy => policy.AddRequirements(new ManageAdminRolesRequiremnet()));
+
+        options.AddPolicy("UserPolicy",
+                          policy => policy.AddRequirements(new ManageUserRequirements()));
+      });
 
       services.AddAutoMapper(typeof(Startup));
 
@@ -81,9 +96,15 @@ namespace WebApp1
 
       services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+      services.AddScoped<IUserRepository, UserRepository>();
+
       services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
       services.AddScoped<IBankRepository, BankRepository>();
+
+      services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
+
+      services.AddSingleton<IAuthorizationHandler, ManageUserHandler>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

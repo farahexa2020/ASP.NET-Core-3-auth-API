@@ -18,19 +18,21 @@ namespace WebApp1.Controllers
 {
   [Route("api/[controller]")]
   [ApiController]
-  public class AccountController : ControllerBase
+  public class AuthController : ControllerBase
   {
-    private readonly UserManager<User> userManager;
-    private readonly SignInManager<User> signInManager;
+    private readonly UserManager<ApplicationUser> userManager;
+    private readonly RoleManager<ApplicationRole> roleManager;
+    private readonly SignInManager<ApplicationUser> signInManager;
     private readonly IRefreshTokenRepository refreshTokenRepository;
     private readonly IUnitOfWork unitOfWork;
     private readonly IMapper mapper;
     private readonly IConfiguration config;
-    public AccountController(IUnitOfWork unitOfWork,
+    public AuthController(IUnitOfWork unitOfWork,
                               IMapper mapper,
                               IConfiguration config,
-                              UserManager<User> userManager,
-                              SignInManager<User> signInManager,
+                              UserManager<ApplicationUser> userManager,
+                              RoleManager<ApplicationRole> roleManager,
+                              SignInManager<ApplicationUser> signInManager,
                               IRefreshTokenRepository refreshTokenRepository)
     {
       this.config = config;
@@ -39,6 +41,7 @@ namespace WebApp1.Controllers
       this.signInManager = signInManager;
       this.refreshTokenRepository = refreshTokenRepository;
       this.userManager = userManager;
+      this.roleManager = roleManager;
     }
 
     [HttpPost]
@@ -49,7 +52,15 @@ namespace WebApp1.Controllers
         return new BadRequestObjectResult(ModelState);
       }
 
-      var user = mapper.Map<RegisterUserResource, User>(userResource);
+      var user = mapper.Map<RegisterUserResource, ApplicationUser>(userResource);
+
+      var role = await roleManager.FindByNameAsync(Roles.User.ToString());
+      if (role == null)
+      {
+        return new BadRequestObjectResult("Role not found");
+      }
+
+      user.UserRoles.Add(new ApplicationUserRole() { RoleId = role.Id });
 
       var result = await userManager.CreateAsync(user, userResource.Password);
 
@@ -126,10 +137,10 @@ namespace WebApp1.Controllers
       }
     }
 
-    private async Task<string> GenerateAccessTokenAsync(User user)
+    private async Task<string> GenerateAccessTokenAsync(ApplicationUser user)
     {
 
-      // List<string> roles = (List<string>)await this.userManager.GetRolesAsync(user);
+      List<string> roles = (List<string>)await this.userManager.GetRolesAsync(user);
 
       List<Claim> claims = new List<Claim>
             {
@@ -140,13 +151,13 @@ namespace WebApp1.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
-      // foreach (string role in roles)
-      // {
-      //   claims.Add(new Claim(ClaimTypes.Role, role));
-      // }
+      foreach (string role in roles)
+      {
+        claims.Add(new Claim(ClaimTypes.Role, role));
+      }
 
       DateTime tokenEndTime = DateTime.Now;
-      tokenEndTime = tokenEndTime.AddMonths(1);
+      tokenEndTime = tokenEndTime.AddDays(1);
 
       var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.config["Token:Key"]));
       var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -159,6 +170,34 @@ namespace WebApp1.Controllers
           signingCredentials: creds);
 
       return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    [HttpPost("refreshtoken")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenResource resource)
+    {
+      if (!ModelState.IsValid) return BadRequest(ModelState);
+
+      var refreshToken = await this.refreshTokenRepository.GetRefreshTokenAsync(new RefreshToken { AccessToken = resource.AccessToken, Token = resource.RefreshToken });
+      if (refreshToken == null) return Unauthorized();
+      if (!await this.signInManager.CanSignInAsync(refreshToken.User)) return Unauthorized();
+
+      var newRefreshToken = new RefreshToken
+      {
+        UserId = refreshToken.User.Id,
+        AccessToken = await GenerateAccessTokenAsync(refreshToken.User),
+        Token = Guid.NewGuid().ToString(),
+        CreatedAt = DateTime.Now
+      };
+      this.refreshTokenRepository.Add(newRefreshToken);
+      await this.unitOfWork.CompleteAsync();
+
+      var response = new TokenResource()
+      {
+        AccessToken = newRefreshToken.AccessToken,
+        RefreshToken = newRefreshToken.Token
+      };
+
+      return new OkObjectResult(response);
     }
   }
 }
