@@ -23,20 +23,23 @@ namespace WebApp1.Controllers
     private readonly RoleManager<ApplicationRole> roleManager;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork unitOfWork;
 
     public UsersController(IMapper mapper,
                             RoleManager<ApplicationRole> roleManager,
                             UserManager<ApplicationUser> userManager,
-                            IUserRepository userRepository)
+                            IUserRepository userRepository,
+                            IUnitOfWork unitOfWork)
     {
       this.userManager = userManager;
       this.userRepository = userRepository;
+      this.unitOfWork = unitOfWork;
       this.roleManager = roleManager;
       this.mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] UserQueryResource userQueryResource)
+    public async Task<IActionResult> GetUsersAsync([FromQuery] UserQueryResource userQueryResource)
     {
       var userQuery = mapper.Map<UserQueryResource, UserQuery>(userQueryResource);
 
@@ -48,7 +51,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(string id)
+    public async Task<IActionResult> GetUserByIdAsync(string id)
     {
       var user = await this.userManager.Users
                                       .Where(u => u.Id == id)
@@ -63,7 +66,7 @@ namespace WebApp1.Controllers
 
     [Authorize(Policy = "EditRolePolicy")]
     [HttpPost("{id}/assignrole")]
-    public async Task<IActionResult> AddUserToRole(string id, [FromQuery] string roleId)
+    public async Task<IActionResult> AddUserToRoleAsync(string id, [FromQuery] string roleId)
     {
       var user = await this.userManager.FindByIdAsync(id);
       if (user == null)
@@ -85,6 +88,8 @@ namespace WebApp1.Controllers
       var result = await userManager.AddToRoleAsync(user, role.Name);
       if (result.Succeeded)
       {
+        await this.unitOfWork.CompleteAsync();
+
         return new OkObjectResult($"User ({user.FirstName}) was added to role ({role.Name})");
       }
 
@@ -98,7 +103,7 @@ namespace WebApp1.Controllers
 
     [Authorize(Policy = "EditRolePolicy")]
     [HttpDelete("{id}/assignrole")]
-    public async Task<IActionResult> RemoveUserToRole(string id, [FromQuery] string roleId)
+    public async Task<IActionResult> RemoveUserFromRoleAsync(string id, [FromQuery] string roleId)
     {
       var user = await this.userManager.FindByIdAsync(id);
       if (user == null)
@@ -120,6 +125,8 @@ namespace WebApp1.Controllers
       var result = await userManager.RemoveFromRoleAsync(user, role.Name);
       if (result.Succeeded)
       {
+        await this.unitOfWork.CompleteAsync();
+
         return new OkObjectResult($"User ({user.FirstName}) was removed from role ({role.Name})");
       }
 

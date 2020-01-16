@@ -22,7 +22,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] UpdateUserResource updateUserResource, [FromQuery] string id)
+    public async Task<IActionResult> UpdateProfileAsync([FromBody] UpdateUserResource updateUserResource, [FromQuery] string id)
     {
       if (ModelState.IsValid)
       {

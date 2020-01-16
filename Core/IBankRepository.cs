@@ -6,6 +6,14 @@ namespace WebApp1.Core
 {
   public interface IBankRepository
   {
-    Task<IEnumerable<Bank>> GetBanks();
+    Task<IEnumerable<Bank>> GetBanksAsync();
+
+    Task<Bank> GetBankByIdAsync(int id);
+
+    Task<IEnumerable<Bank>> GetActiveBanksAsync();
+
+    void Add(Bank bank);
+
+    void Remove(Bank bank);
   }
 }

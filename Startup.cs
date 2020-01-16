@@ -45,7 +45,8 @@ namespace WebApp1
 
       // options => options.SignIn.RequireConfirmedAccount = true
       services.AddIdentity<ApplicationUser, ApplicationRole>()
-          .AddEntityFrameworkStores<DataDbContext>();
+          .AddEntityFrameworkStores<DataDbContext>()
+          .AddDefaultTokenProviders();
 
       services.Configure<IdentityOptions>(options =>
       {
@@ -55,6 +56,8 @@ namespace WebApp1
         options.Password.RequireUppercase = false;
         options.Password.RequiredLength = 8;
         options.Password.RequiredUniqueChars = 1;
+
+        options.SignIn.RequireConfirmedEmail = true;
       });
 
       services.AddAuthentication(options =>
@@ -95,6 +98,8 @@ namespace WebApp1
       services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
       services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+      services.AddScoped<IAuthRepository, AuthRepository>();
 
       services.AddScoped<IUserRepository, UserRepository>();
 
