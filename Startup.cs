@@ -99,8 +99,6 @@ namespace WebApp1
 
       services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-      services.AddScoped<IAuthRepository, AuthRepository>();
-
       services.AddScoped<IUserRepository, UserRepository>();
 
       services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();

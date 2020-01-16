@@ -24,7 +24,6 @@ namespace WebApp1.Controllers
     private readonly UserManager<ApplicationUser> userManager;
     private readonly RoleManager<ApplicationRole> roleManager;
     private readonly SignInManager<ApplicationUser> signInManager;
-    private readonly IAuthRepository authRepository;
     private readonly IRefreshTokenRepository refreshTokenRepository;
     private readonly IUnitOfWork unitOfWork;
     private readonly IMapper mapper;
@@ -35,14 +34,12 @@ namespace WebApp1.Controllers
                           UserManager<ApplicationUser> userManager,
                           RoleManager<ApplicationRole> roleManager,
                           SignInManager<ApplicationUser> signInManager,
-                          IAuthRepository authRepository,
                           IRefreshTokenRepository refreshTokenRepository)
     {
       this.config = config;
       this.unitOfWork = unitOfWork;
       this.mapper = mapper;
       this.signInManager = signInManager;
-      this.authRepository = authRepository;
       this.refreshTokenRepository = refreshTokenRepository;
       this.userManager = userManager;
       this.roleManager = roleManager;
@@ -63,7 +60,7 @@ namespace WebApp1.Controllers
 
         user.UserRoles.Add(new ApplicationUserRole() { RoleId = role.Id });
 
-        var result = await this.authRepository.CreateUserAsync(user, userResource.Password);
+        var result = await this.userManager.CreateAsync(user, userResource.Password);
 
         if (!result.Succeeded)
         {
@@ -104,16 +101,16 @@ namespace WebApp1.Controllers
     {
       if (ModelState.IsValid)
       {
-        var user = await this.authRepository.GetUserByEmailAsync(loginUserResource.Email);
+        var user = await this.userManager.FindByEmailAsync(loginUserResource.Email);
 
-        if (!this.authRepository.CheckUser(user) || !await this.authRepository.CheckCredentialAsync(user, loginUserResource.Password))
+        if (user == null || !await this.userManager.CheckPasswordAsync(user, loginUserResource.Password))
         {
           return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
             "Email and password does not match",
             null
           ));
         }
-        else if (!user.EmailConfirmed && await this.authRepository.CheckCredentialAsync(user, loginUserResource.Password))
+        else if (!user.EmailConfirmed && await this.userManager.CheckPasswordAsync(user, loginUserResource.Password))
         {
           return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
             "Email not confirmed yet",
@@ -121,7 +118,9 @@ namespace WebApp1.Controllers
           ));
         }
 
-        if (!await authRepository.CheckPasswordSignInAsync(user, loginUserResource.Password, false))
+        var result = await this.signInManager.CheckPasswordSignInAsync(user, loginUserResource.Password, false);
+
+        if (!result.Succeeded)
         {
           return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
             "Email and password does not match",
