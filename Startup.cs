@@ -133,6 +133,9 @@ namespace WebApp1
       app.UseAuthentication();
       app.UseAuthorization();
 
+      app.UseExceptionHandler("/api/errors/500");
+      app.UseStatusCodePagesWithReExecute("/api/errors/{0}");
+
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");

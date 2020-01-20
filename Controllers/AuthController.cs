@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using WebApp1.Controllers.Resources;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 using WebApp1.Data;
@@ -68,11 +69,14 @@ namespace WebApp1.Controllers
           {
             ModelState.AddModelError(error.Code, error.Description);
           }
-          return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Registration error",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+
+          return new BadRequestObjectResult(new BadRequestResource(
+            "Invalid request",
+            ModelState.Keys
+            .SelectMany(key => ModelState[key].Errors.Select
+                          (x => new ValidationErrorResource(key, x.ErrorMessage)))
+            .ToList()
+          ));
         }
         else
         {
@@ -85,15 +89,20 @@ namespace WebApp1.Controllers
 
           await this.unitOfWork.CompleteAsync();
 
-          return new OkObjectResult(callbackUrl);
+          return new OkObjectResult(new CreatedResource(
+            "Please confirm this accuont",
+            callbackUrl
+          ));
         }
       }
 
-      return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Invalid request",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpPost("login")]
@@ -105,16 +114,14 @@ namespace WebApp1.Controllers
 
         if (user == null || !await this.userManager.CheckPasswordAsync(user, loginUserResource.Password))
         {
-          return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
-            "Email and password does not match",
-            null
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Email and password does not match"
           ));
         }
         else if (!user.EmailConfirmed && await this.userManager.CheckPasswordAsync(user, loginUserResource.Password))
         {
-          return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
-            "Email not confirmed yet",
-            null
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Email not confirmed yet"
           ));
         }
 
@@ -122,9 +129,8 @@ namespace WebApp1.Controllers
 
         if (!result.Succeeded)
         {
-          return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
-            "Email and password does not match",
-            null
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Email and password does not match"
           ));
         }
         else
@@ -147,15 +153,20 @@ namespace WebApp1.Controllers
             RefreshToken = newRefreshToken.Token
           };
 
-          return new OkObjectResult(response);
+          return new OkObjectResult(new OkResource(
+            "You are logged in",
+            response
+          ));
         }
       }
 
-      return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Invalid request",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpPost("refreshtoken")]
@@ -194,9 +205,8 @@ namespace WebApp1.Controllers
         var user = await this.userManager.FindByIdAsync(emailConfirmationResource.UserId);
         if (user == null)
         {
-          return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
-            "Email and password does not match",
-            null
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Email and password does not match"
           ));
         }
 
@@ -208,26 +218,29 @@ namespace WebApp1.Controllers
             ModelState.AddModelError("", error.Description);
           }
 
-          return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Confirmation error",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Invalid request",
+            ModelState.Keys
+            .SelectMany(key => ModelState[key].Errors.Select
+                          (x => new ValidationErrorResource(key, x.ErrorMessage)))
+            .ToList()
+          ));
         }
         else
         {
-          return new OkObjectResult(new ResponseObjectResulrResource(
-            "Congratulation , the email is confirmed successfully",
-            null
+          return new OkObjectResult(new OkResource(
+            "Congratulation , the email is confirmed successfully"
           ));
         }
       }
 
-      return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Invalid request",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpPost("resendconfirmationemail")]
@@ -239,9 +252,8 @@ namespace WebApp1.Controllers
 
         if (user == null || !await this.userManager.CheckPasswordAsync(user, loginUserResource.Password))
         {
-          return new UnauthorizedObjectResult(new ResponseObjectResulrResource(
-            "Email and password does not match",
-            null
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "Email and password does not match"
           ));
         }
         else if (!user.EmailConfirmed)
@@ -253,22 +265,26 @@ namespace WebApp1.Controllers
               values: new EmailConfirmationResource { UserId = user.Id, Token = token },
               protocol: Request.Scheme);
 
-          return new OkObjectResult(callbackUrl);
+          return new OkObjectResult(new OkResource(
+            "Please confirm this account",
+            callbackUrl
+          ));
         }
         else
         {
-          return new BadRequestObjectResult(new ResponseObjectResulrResource(
-            "Email is already confirmed",
-            null
+          return new BadRequestObjectResult(new BadRequestResource(
+            "Email is already confirmed"
           ));
         }
       }
 
-      return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Invalid request",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     private async Task<string> GenerateAccessTokenAsync(ApplicationUser user)

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Controllers.Resources;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 
@@ -47,7 +48,10 @@ namespace WebApp1.Controllers
 
       var response = mapper.Map<QueryResult<ApplicationUser>, QueryResultResource<UserResource>>(queryResult);
 
-      return new OkObjectResult(response);
+      return new OkObjectResult(new OkResource(
+        "All Users",
+        response
+      ));
     }
 
     [HttpGet("{id}")]
@@ -61,7 +65,10 @@ namespace WebApp1.Controllers
 
       var response = this.mapper.Map<ApplicationUser, UserResource>(user);
 
-      return new OkObjectResult(response);
+      return new OkObjectResult(new OkResource(
+        "User with Id ({id})",
+        response
+      ));
     }
 
     [Authorize(Policy = "EditRolePolicy")]
