@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class BadRequestResource : ApiErrorResource
+  public class BadRequestResource : ApiResponseResource
   {
     public BadRequestResource()
 : base(400, HttpStatusCode.BadRequest.ToString())

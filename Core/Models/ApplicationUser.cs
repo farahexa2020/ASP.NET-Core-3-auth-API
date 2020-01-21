@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,12 @@ namespace WebApp1.Core.Models
     [Required]
     [EmailAddress]
     public string LastName { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 
     public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
 

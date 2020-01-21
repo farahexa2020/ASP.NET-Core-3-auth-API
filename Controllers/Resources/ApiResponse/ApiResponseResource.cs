@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class ApiErrorResource
+  public class ApiResponseResource
   {
     public int StatusCode { get; private set; }
 
@@ -16,26 +16,26 @@ namespace WebApp1.Controllers.Resources.ApiError
 
     public object Result { get; set; }
 
-    public ApiErrorResource(int statusCode, string statusDescription)
+    public ApiResponseResource(int statusCode, string statusDescription)
     {
       this.StatusCode = statusCode;
       this.StatusDescription = statusDescription;
     }
 
-    public ApiErrorResource(int statusCode, string statusDescription, string message)
+    public ApiResponseResource(int statusCode, string statusDescription, string message)
         : this(statusCode, statusDescription)
     {
       this.Message = message;
     }
 
-    public ApiErrorResource(int statusCode, string statusDescription, string message, IEnumerable<ValidationErrorResource> errors)
+    public ApiResponseResource(int statusCode, string statusDescription, string message, IEnumerable<ValidationErrorResource> errors)
         : this(statusCode, statusDescription)
     {
       this.Message = message;
       this.ModelStateErrors = errors;
     }
 
-    public ApiErrorResource(int statusCode, string statusDescription, string message, IEnumerable<ValidationErrorResource> errors, object result)
+    public ApiResponseResource(int statusCode, string statusDescription, string message, IEnumerable<ValidationErrorResource> errors, object result)
         : this(statusCode, statusDescription)
     {
       this.Message = message;

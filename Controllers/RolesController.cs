@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Controllers.Resources;
+using WebApp1.Controllers.Resources.ApiResponse;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 
@@ -46,9 +47,8 @@ namespace WebApp1.Controllers
         {
           await this.unitOfWork.CompleteAsync();
 
-          return new OkObjectResult(new ResponseObjectResulrResource(
-            $"New role with name ({roleResource.RoleName}) was created",
-            null
+          return new OkObjectResult(new CreatedResource(
+            $"New role with name ({roleResource.RoleName}) was created"
           ));
         }
         foreach (IdentityError error in result.Errors)
@@ -57,11 +57,13 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(
-                    new ResponseObjectResulrResource("Invalid request",
-                                                      ModelState.Values.Select(
-                                                        e => e.Errors[0].ErrorMessage
-                                                      ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpGet]
@@ -71,7 +73,10 @@ namespace WebApp1.Controllers
 
       var respone = this.mapper.Map<IEnumerable<ApplicationRole>, IEnumerable<RoleResource>>(roles);
 
-      return new OkObjectResult(respone);
+      return new OkObjectResult(new OkResource(
+        "All Roles",
+        respone
+      ));
     }
 
     [HttpPut]
@@ -83,9 +88,8 @@ namespace WebApp1.Controllers
 
         if (role == null)
         {
-          return new NotFoundObjectResult(new ResponseObjectResulrResource(
-            $"Role with Id: ({createRoleResource.Id}) cannot be found",
-            null
+          return new NotFoundObjectResult(new NotFoundResource(
+            $"Role with Id: ({createRoleResource.Id}) cannot be found"
           ));
         }
         else
@@ -97,9 +101,8 @@ namespace WebApp1.Controllers
           {
             await this.unitOfWork.CompleteAsync();
 
-            return new OkObjectResult(new ResponseObjectResulrResource(
-              $"Role with Id: ({createRoleResource.Id}) was updated",
-              null
+            return new OkObjectResult(new OkResource(
+              $"Role with Id: ({createRoleResource.Id}) was updated"
             ));
           }
 
@@ -110,11 +113,13 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(
-                      new ResponseObjectResulrResource("Invalid request",
-                                                        ModelState.Values.Select(
-                                                          e => e.Errors[0].ErrorMessage
-                                                        ).ToList()));
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpDelete("{id}")]
@@ -124,9 +129,8 @@ namespace WebApp1.Controllers
 
       if (role == null)
       {
-        return new NotFoundObjectResult(new ResponseObjectResulrResource(
-          $"Role with Id: ({id}) cannot be found",
-          null
+        return new NotFoundObjectResult(new NotFoundResource(
+          $"Role with Id: ({id}) cannot be found"
         ));
       }
 
@@ -138,9 +142,8 @@ namespace WebApp1.Controllers
         {
           await this.unitOfWork.CompleteAsync();
 
-          return new OkObjectResult(new ResponseObjectResulrResource(
-            $"Role ({role.Name}) deleted",
-            null
+          return new OkObjectResult(new OkResource(
+            $"Role ({role.Name}) deleted"
           ));
         }
 
@@ -149,13 +152,18 @@ namespace WebApp1.Controllers
           ModelState.AddModelError("", error.Description);
         }
 
-        return new BadRequestObjectResult(ModelState);
+        return new BadRequestObjectResult(new BadRequestResource(
+          "Invalid request",
+          ModelState.Keys
+          .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+          .ToList()
+        ));
       }
       catch (DbUpdateException e)
       {
-        return new BadRequestObjectResult(new ResponseObjectResulrResource(
-          $"({role.Name}) is in use",
-          null
+        return new BadRequestObjectResult(new BadRequestResource(
+          $"({role.Name}) is in use"
         ));
       }
     }

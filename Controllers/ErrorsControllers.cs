@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
-using WebApp1.Controllers.Resources.ApiError;
+using WebApp1.Controllers.Resources.ApiResponse;
 
 namespace WebApp1.Controllers
 {
@@ -9,10 +9,11 @@ namespace WebApp1.Controllers
   public class ErrorsControllers
   {
     [Route("{code}")]
+    [HttpGet]
     public IActionResult Error(int code)
     {
       HttpStatusCode parsedCode = (HttpStatusCode)code;
-      var error = new ApiErrorResource(code, parsedCode.ToString());
+      var error = new ApiResponseResource(code, parsedCode.ToString());
 
       return new ObjectResult(error);
     }

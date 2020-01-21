@@ -1,9 +1,9 @@
 using System.Net;
 using System.Collections.Generic;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class OkResource : ApiErrorResource
+  public class OkResource : ApiResponseResource
   {
     public OkResource()
         : base(200, HttpStatusCode.OK.ToString())

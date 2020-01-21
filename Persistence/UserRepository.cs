@@ -33,14 +33,22 @@ namespace WebApp1.Persistence
       {
         query = query.Where(u => u.FirstName == queryObj.FirstName);
       }
+
       if (!string.IsNullOrWhiteSpace(queryObj.LastName))
       {
         query = query.Where(u => u.LastName == queryObj.LastName);
       }
+
       if (!string.IsNullOrWhiteSpace(queryObj.Email))
       {
         query = query.Where(u => u.Email == queryObj.Email);
       }
+
+      if (queryObj.IsActive.HasValue)
+      {
+        query = query.Where(u => u.IsActive == queryObj.IsActive.Value);
+      }
+
       if (!string.IsNullOrWhiteSpace(queryObj.RoleId))
       {
         query = query.Where(u => u.UserRoles.Select(ur => ur.RoleId).Contains(queryObj.RoleId));
@@ -62,6 +70,18 @@ namespace WebApp1.Persistence
       result.Items = await query.ToListAsync();
 
       return result;
+    }
+
+    public async Task<ApplicationUser> GetUserById(string id)
+    {
+
+      var user = await this.userManager.Users
+                                      .Where(u => u.Id == id)
+                                      .Include(u => u.UserRoles)
+                                      .ThenInclude(ur => ur.Role)
+                                      .SingleOrDefaultAsync();
+
+      return user;
     }
   }
 }

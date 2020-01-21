@@ -6,12 +6,13 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiError;
+using WebApp1.Controllers.Resources.ApiResponse;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 using WebApp1.Data;
@@ -56,10 +57,16 @@ namespace WebApp1.Controllers
         var role = await roleManager.FindByNameAsync(Roles.User.ToString());
         if (role == null)
         {
-          return new BadRequestObjectResult("Role not found");
+          return new BadRequestObjectResult(new BadRequestResource(
+            "Role not found"
+          ));
         }
 
         user.UserRoles.Add(new ApplicationUserRole() { RoleId = role.Id });
+
+        user.IsActive = true;
+        user.CreatedAt = DateTime.Now;
+        user.UpdatedAt = DateTime.Now;
 
         var result = await this.userManager.CreateAsync(user, userResource.Password);
 
@@ -105,7 +112,7 @@ namespace WebApp1.Controllers
       ));
     }
 
-    [HttpPost("login")]
+    [HttpPost("Login")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginUserResource loginUserResource)
     {
       if (ModelState.IsValid)
@@ -122,6 +129,12 @@ namespace WebApp1.Controllers
         {
           return new UnauthorizedObjectResult(new UnAuthorizedResource(
             "Email not confirmed yet"
+          ));
+        }
+        else if (!user.IsActive)
+        {
+          return new UnauthorizedObjectResult(new UnAuthorizedResource(
+            "User is disactivated"
           ));
         }
 
@@ -169,32 +182,50 @@ namespace WebApp1.Controllers
       ));
     }
 
-    [HttpPost("refreshtoken")]
+    [HttpPost("RefreshToken")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenResource resource)
     {
-      if (!ModelState.IsValid) return BadRequest(ModelState);
-
-      var refreshToken = await this.refreshTokenRepository.GetRefreshTokenAsync(new RefreshToken { AccessToken = resource.AccessToken, Token = resource.RefreshToken });
-      if (refreshToken == null) return Unauthorized();
-      if (!await this.signInManager.CanSignInAsync(refreshToken.User)) return Unauthorized();
-
-      var newRefreshToken = new RefreshToken
+      if (ModelState.IsValid)
       {
-        UserId = refreshToken.User.Id,
-        AccessToken = await GenerateAccessTokenAsync(refreshToken.User),
-        Token = Guid.NewGuid().ToString(),
-        CreatedAt = DateTime.Now
-      };
-      this.refreshTokenRepository.Add(newRefreshToken);
-      await this.unitOfWork.CompleteAsync();
+        var refreshToken = await this.refreshTokenRepository.GetRefreshTokenAsync(new RefreshToken { AccessToken = resource.AccessToken, Token = resource.RefreshToken });
+        if (refreshToken == null)
+        {
+          return Unauthorized();
+        }
+        if (!await this.signInManager.CanSignInAsync(refreshToken.User))
+        {
+          return Unauthorized();
+        }
 
-      var response = new TokenResource()
-      {
-        AccessToken = newRefreshToken.AccessToken,
-        RefreshToken = newRefreshToken.Token
-      };
+        var newRefreshToken = new RefreshToken
+        {
+          UserId = refreshToken.User.Id,
+          AccessToken = await GenerateAccessTokenAsync(refreshToken.User),
+          Token = Guid.NewGuid().ToString(),
+          CreatedAt = DateTime.Now
+        };
+        this.refreshTokenRepository.Add(newRefreshToken);
+        await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult(response);
+        var response = new TokenResource()
+        {
+          AccessToken = newRefreshToken.AccessToken,
+          RefreshToken = newRefreshToken.Token
+        };
+
+        return new OkObjectResult(new OkResource(
+          "You are logged in",
+          response
+        ));
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [HttpGet("ConfirmEmail")]
@@ -243,7 +274,7 @@ namespace WebApp1.Controllers
       ));
     }
 
-    [HttpPost("resendconfirmationemail")]
+    [HttpPost("ResendConfirmationEmail")]
     public async Task<IActionResult> ResendConfirmationEmail([FromBody] LoginUserResource loginUserResource)
     {
       if (ModelState.IsValid)
@@ -275,6 +306,73 @@ namespace WebApp1.Controllers
           return new BadRequestObjectResult(new BadRequestResource(
             "Email is already confirmed"
           ));
+        }
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
+    }
+
+    [HttpGet("SendPasswordResetLink")]
+    public async Task<IActionResult> SendPasswordResetLink([FromQuery] string email)
+    {
+      var user = await this.userManager.FindByEmailAsync(email);
+      if (user == null || !(this.userManager.IsEmailConfirmedAsync(user).Result))
+      {
+        return new NotFoundObjectResult(new NotFoundResource(
+          $"User ({email}) does not exist"
+        ));
+      }
+
+      var token = await this.userManager.GeneratePasswordResetTokenAsync(user);
+
+      var resetLink = Url.Action("ResetPassword",
+                      "Auth", new { token = token },
+                       protocol: HttpContext.Request.Scheme);
+
+      // await _emailSender.SendEmailAsync(userEmail, "Reset your password",
+      //  $"Please follow this  <a href='{HtmlEncoder.Default.Encode(resetLink)}'>link </a> to reset your password.");
+
+      return new OkObjectResult(new OkResource(
+        "Please check your email",
+        resetLink
+      ));
+    }
+
+    [HttpPost("ResetPassword")]
+    public async Task<IActionResult> ResetPassword([FromQuery] string token, [FromBody] ResetPasswordResource resource)
+    {
+      if (ModelState.IsValid)
+      {
+        var user = await this.userManager.FindByEmailAsync(resource.Email);
+
+        IdentityResult result = await this.userManager.ResetPasswordAsync(user, token, resource.Password);
+        if (!result.Succeeded)
+        {
+          foreach (IdentityError error in result.Errors)
+          {
+            ModelState.AddModelError("", error.Description);
+          }
+
+          return new BadRequestObjectResult(new BadRequestResource(
+            "Invalid request",
+            ModelState.Keys
+            .SelectMany(key => ModelState[key].Errors.Select
+                          (x => new ValidationErrorResource(key, x.ErrorMessage)))
+            .ToList()
+          ));
+        }
+        else
+        {
+          return new OkObjectResult(new OkResource(
+              "reset password is done successfully"
+            ));
+
         }
       }
 

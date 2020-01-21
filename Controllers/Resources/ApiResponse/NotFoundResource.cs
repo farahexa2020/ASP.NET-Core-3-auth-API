@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class NotFoundResource : ApiErrorResource
+  public class NotFoundResource : ApiResponseResource
   {
     public NotFoundResource()
-: base(404, HttpStatusCode.NotFound.ToString())
+        : base(404, HttpStatusCode.NotFound.ToString())
     {
     }
 

@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class UnAuthorizedResource : ApiErrorResource
+  public class UnAuthorizedResource : ApiResponseResource
   {
     public UnAuthorizedResource()
-    : base(401, HttpStatusCode.Unauthorized.ToString())
+          : base(401, HttpStatusCode.Unauthorized.ToString())
     {
     }
 
     public UnAuthorizedResource(string message)
-        : base(401, HttpStatusCode.Unauthorized.ToString(), message)
+          : base(401, HttpStatusCode.Unauthorized.ToString(), message)
     {
     }
 

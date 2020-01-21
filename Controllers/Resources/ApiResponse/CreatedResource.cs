@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace WebApp1.Controllers.Resources.ApiError
+namespace WebApp1.Controllers.Resources.ApiResponse
 {
-  public class CreatedResource : ApiErrorResource
+  public class CreatedResource : ApiResponseResource
   {
     public CreatedResource()
-    : base(201, HttpStatusCode.OK.ToString())
+        : base(201, HttpStatusCode.OK.ToString())
     {
     }
 

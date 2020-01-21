@@ -14,9 +14,16 @@ namespace WebApp1.Extensions
         return query;
       }
 
-      if (queryObj.IsSortAscending)
+      if (queryObj.IsSortAscending.HasValue)
       {
-        return query.OrderBy(columnsMap[queryObj.SortBy]);
+        if (queryObj.IsSortAscending.Value == true)
+        {
+          return query.OrderBy(columnsMap[queryObj.SortBy]);
+        }
+        else
+        {
+          return query.OrderByDescending(columnsMap[queryObj.SortBy]);
+        }
       }
       else
       {
