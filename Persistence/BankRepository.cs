@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using WebApp1.Controllers.Resources.Bank;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 using WebApp1.Data;
@@ -49,6 +50,20 @@ namespace WebApp1.Persistence
     public void Remove(Bank bank)
     {
       this.context.Remove(bank);
+    }
+
+    public async Task<IEnumerable<BankTranslation>> GetBankTranslation(int bankId)
+    {
+      return await this.context.BankTranslations.Where(bt => bt.BankId == bankId).ToListAsync();
+    }
+
+    public async Task AddBankTranslation(int Id, BankTranslation bankTranslation)
+    {
+      var bank = await this.context.Banks.Where(b => b.Id == Id).SingleOrDefaultAsync();
+
+      bank.Translations.Add(bankTranslation);
+
+      this.context.Update(bank);
     }
   }
 }

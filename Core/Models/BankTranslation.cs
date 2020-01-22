@@ -6,8 +6,6 @@ namespace WebApp1.Core.Models
   [Table("BankTranslations")]
   public class BankTranslation
   {
-    public int Id { get; set; }
-
     [Required]
     public string LanguageId { get; set; }
 

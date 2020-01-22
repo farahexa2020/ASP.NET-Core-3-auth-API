@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp1.Data;
 
-namespace WebApp1.Data.Migrations
+namespace WebApp1.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20200113091836_UpdateDbContextGeneric")]
-    partial class UpdateDbContextGeneric
+    [Migration("20200122094325_AddBank")]
+    partial class AddBank
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -149,6 +149,9 @@ namespace WebApp1.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
@@ -159,6 +162,9 @@ namespace WebApp1.Data.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -192,6 +198,9 @@ namespace WebApp1.Data.Migrations
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(256)")
@@ -242,6 +251,9 @@ namespace WebApp1.Data.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
@@ -249,11 +261,22 @@ namespace WebApp1.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(255)")
+                        .HasMaxLength(255);
+
                     b.Property<int>("SequenceNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("SequenceNumberUpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -272,10 +295,7 @@ namespace WebApp1.Data.Migrations
 
                     b.Property<string>("LanguageId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("LanguageId1")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -286,17 +306,15 @@ namespace WebApp1.Data.Migrations
 
                     b.HasIndex("BankId");
 
-                    b.HasIndex("LanguageId1");
+                    b.HasIndex("LanguageId");
 
                     b.ToTable("BankTranslations");
                 });
 
             modelBuilder.Entity("WebApp1.Core.Models.Language", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -399,8 +417,9 @@ namespace WebApp1.Data.Migrations
 
                     b.HasOne("WebApp1.Core.Models.Language", "Language")
                         .WithMany()
-                        .HasForeignKey("LanguageId1")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApp1.Core.Models.RefreshToken", b =>

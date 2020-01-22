@@ -23,6 +23,7 @@ using WebApp1.Core.Models;
 using WebApp1.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
+using WebApp1.Middlewares;
 
 namespace WebApp1
 {
@@ -142,6 +143,8 @@ namespace WebApp1
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
       });
 
+      app.UseCheckLanguageHeader();
+
       app.UseHttpsRedirection();
       app.UseStaticFiles();
 
@@ -150,7 +153,7 @@ namespace WebApp1
       app.UseAuthentication();
       app.UseAuthorization();
 
-      app.UseExceptionHandler("/api/Errors/500");
+      // app.UseExceptionHandler("/api/Errors/{0}");
       app.UseStatusCodePagesWithReExecute("/api/Errors/{0}");
 
       app.UseEndpoints(endpoints =>

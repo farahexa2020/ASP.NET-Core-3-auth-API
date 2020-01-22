@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebApp1.Controllers.Resources.Bank;
 using WebApp1.Core.Models;
 
 namespace WebApp1.Core
@@ -15,5 +16,9 @@ namespace WebApp1.Core
     void Add(Bank bank);
 
     void Remove(Bank bank);
+
+    Task<IEnumerable<BankTranslation>> GetBankTranslation(int bankId);
+
+    Task AddBankTranslation(int bankId, BankTranslation bankTranslation);
   }
 }

@@ -3,17 +3,15 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp1.Data;
 
-namespace WebApp1.Data.Migrations
+namespace WebApp1.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20200121104725_AddUserActivation")]
-    partial class AddUserActivation
+    partial class DataDbContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -251,6 +249,9 @@ namespace WebApp1.Data.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
@@ -258,11 +259,22 @@ namespace WebApp1.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(255)")
+                        .HasMaxLength(255);
+
                     b.Property<int>("SequenceNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("SequenceNumberUpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -271,19 +283,10 @@ namespace WebApp1.Data.Migrations
 
             modelBuilder.Entity("WebApp1.Core.Models.BankTranslation", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                    b.Property<string>("LanguageId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("BankId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("LanguageId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("LanguageId1")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -291,21 +294,17 @@ namespace WebApp1.Data.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
 
-                    b.HasKey("Id");
+                    b.HasKey("LanguageId", "BankId");
 
                     b.HasIndex("BankId");
-
-                    b.HasIndex("LanguageId1");
 
                     b.ToTable("BankTranslations");
                 });
 
             modelBuilder.Entity("WebApp1.Core.Models.Language", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -408,8 +407,9 @@ namespace WebApp1.Data.Migrations
 
                     b.HasOne("WebApp1.Core.Models.Language", "Language")
                         .WithMany()
-                        .HasForeignKey("LanguageId1")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApp1.Core.Models.RefreshToken", b =>

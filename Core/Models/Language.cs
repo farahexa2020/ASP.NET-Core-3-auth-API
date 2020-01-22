@@ -6,7 +6,8 @@ namespace WebApp1.Core.Models
   [Table("Languages")]
   public class Language
   {
-    public int Id { get; set; }
+    [Key]
+    public string Id { get; set; }
 
     [Required]
     [StringLength(255)]

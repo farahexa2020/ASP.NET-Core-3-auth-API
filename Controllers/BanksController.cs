@@ -4,36 +4,111 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WebApp1.Controllers.Resources;
+using WebApp1.Controllers.Resources.Bank;
+using WebApp1.Controllers.Resources.ApiResponse;
 using WebApp1.Core;
 using WebApp1.Core.Models;
+using System.Security.Claims;
+using System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebApp1.Controllers
 {
   [Route("api/banks")]
   public class BanksController : Controller
   {
-    private readonly IBankRepository bankRepository;
     private readonly IMapper mapper;
-    private readonly IHttpContextAccessor httpContextAccessor;
     private readonly IUnitOfWork unitOfWork;
-    public BanksController(IBankRepository bankRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork)
+    private readonly IBankRepository bankRepository;
+    public BanksController(IMapper mapper, IUnitOfWork unitOfWork, IBankRepository bankRepository)
     {
-      this.unitOfWork = unitOfWork;
-      this.httpContextAccessor = httpContextAccessor;
-      this.mapper = mapper;
       this.bankRepository = bankRepository;
+      this.unitOfWork = unitOfWork;
+      this.mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<BankResource>> GetActiveBanks()
+    public async Task<IActionResult> GetActiveBanks()
     {
-      var language = this.httpContextAccessor.HttpContext.Request.Headers["Accept-Language"].ToString();
+      var language = Request.Headers["Accept-Language"].ToString();
 
       var banks = await this.bankRepository.GetActiveBanksAsync();
       var result = this.mapper.Map<IEnumerable<Bank>, IEnumerable<BankResource>>(banks, opt => opt.Items["language"] = language);
 
-      return Ok(result);
+      return new OkObjectResult(new OkResource(
+        "All Active Banks",
+        result
+      ));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult> GetBankById(int id)
+    {
+      var language = Request.Headers["Accept-Language"].ToString();
+
+      var bank = await this.bankRepository.GetBankByIdAsync(id);
+      if (bank == null)
+        return new NotFoundObjectResult(new NotFoundResource($"Bank with Id ({id}) not found"));
+
+      var result = this.mapper.Map<Bank, BankResource>(bank, opt => opt.Items["language"] = language);
+
+      return new OkObjectResult(new OkResource(
+        $"Bank ({id})",
+        result
+      ));
+    }
+
+    [Authorize(Policy = "AdminPolicy")]
+    [HttpPost]
+    public async Task<ActionResult> CreateBank([FromBody] CreateBankResource resource)
+    {
+      string userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+      if (!ModelState.IsValid) return BadRequest(ModelState);
+
+      Bank bank = this.mapper.Map<CreateBankResource, Bank>(resource);
+      bank.UpdatedAt = DateTime.Now;
+      bank.UpdatedBy = userId;
+
+      this.bankRepository.Add(bank);
+      await this.unitOfWork.CompleteAsync();
+
+      return new OkObjectResult(new CreatedResource(
+        "Bank created"
+      ));
+    }
+
+    [HttpPost("{id}/Translations")]
+    public async Task<IActionResult> AddBankTranslation([FromRoute] int id, [FromBody] BankTranslation bankTranslation)
+    {
+      if (ModelState.IsValid)
+      {
+        try
+        {
+          await this.bankRepository.AddBankTranslation(id, bankTranslation);
+
+          await this.unitOfWork.CompleteAsync();
+
+          return new OkObjectResult(new OkResource(
+            $"Bank ({id}) updated"
+          ));
+        }
+        catch (DbUpdateException e)
+        {
+          return new BadRequestObjectResult(new BadRequestResource(
+            $"Name ({bankTranslation.Name}) is already added"
+          ));
+        }
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
     }
 
     [Authorize(Policy = "AdminPolicy")]
@@ -42,12 +117,18 @@ namespace WebApp1.Controllers
     {
       var bank = await this.bankRepository.GetBankByIdAsync(id);
       if (bank == null)
-        return new NotFoundObjectResult($"Bank with Id ({id}) Not Found");
+      {
+        return new NotFoundObjectResult(new NotFoundResource(
+          $"Bank with Id ({id}) Not Found"
+        ));
+      }
 
       bank.IsActive = false;
       await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult($"Bank with Id ({id}) has Disactivated");
+      return new OkObjectResult(new OkResource(
+        $"Bank with Id ({id}) has Disactivated"
+      ));
     }
   }
 }

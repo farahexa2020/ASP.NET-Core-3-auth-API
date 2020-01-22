@@ -50,6 +50,9 @@ namespace WebApp1.Data
               .HasForeignKey(ur => ur.RoleId)
               .IsRequired();
         });
+
+      // Configure many to many
+      builder.Entity<BankTranslation>().HasKey(ct => new { ct.LanguageId, ct.BankId });
     }
   }
 }

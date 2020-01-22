@@ -1,4 +1,4 @@
-namespace WebApp1.Controllers.Resources
+namespace WebApp1.Controllers.Resources.Bank
 {
   public class BankResource
   {

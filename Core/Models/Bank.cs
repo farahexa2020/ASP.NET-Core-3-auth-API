@@ -11,6 +11,10 @@ namespace WebApp1.Core.Models
   {
     public int Id { get; set; }
 
+    [Required]
+    [StringLength(255)]
+    public string KeyName { get; set; }
+
     [StringLength(255)]
     public string ImageUrl { get; set; }
 
@@ -27,6 +31,12 @@ namespace WebApp1.Core.Models
     public DateTime SequenceNumberUpdatedAt { get; set; }
 
     public bool IsActive { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+
+    public string UpdatedBy { get; set; }
 
     public ICollection<BankTranslation> Translations { get; set; }
 
