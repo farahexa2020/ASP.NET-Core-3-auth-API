@@ -121,17 +121,17 @@ namespace WebApp1
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-      if (env.IsDevelopment())
-      {
-        app.UseDeveloperExceptionPage();
-        app.UseDatabaseErrorPage();
-      }
-      else
-      {
-        app.UseExceptionHandler("/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-      }
+      // if (env.IsDevelopment())
+      // {
+      //   app.UseDeveloperExceptionPage();
+      //   app.UseDatabaseErrorPage();
+      // }
+      // else
+      // {
+      //   app.UseExceptionHandler("/Error");
+      //   // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+      //   app.UseHsts();
+      // }
 
       // Enable middleware to serve generated Swagger as a JSON endpoint.
       app.UseSwagger();
@@ -143,6 +143,10 @@ namespace WebApp1
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
       });
 
+      app.UseExceptionHandler("/api/Errors/500");
+      app.UseStatusCodePagesWithReExecute("/api/Errors/{0}");
+
+
       app.UseCheckLanguageHeader();
 
       app.UseHttpsRedirection();
@@ -152,9 +156,6 @@ namespace WebApp1
 
       app.UseAuthentication();
       app.UseAuthorization();
-
-      // app.UseExceptionHandler("/api/Errors/{0}");
-      app.UseStatusCodePagesWithReExecute("/api/Errors/{0}");
 
       app.UseEndpoints(endpoints =>
       {

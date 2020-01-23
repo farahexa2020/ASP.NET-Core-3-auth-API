@@ -84,6 +84,7 @@ namespace WebApp1.Controllers
     {
       if (ModelState.IsValid)
       {
+        var language = Request.Headers["Accept-Language"].ToString();
         try
         {
           await this.bankRepository.AddBankTranslation(id, bankTranslation);
@@ -97,7 +98,7 @@ namespace WebApp1.Controllers
         catch (DbUpdateException e)
         {
           return new BadRequestObjectResult(new BadRequestResource(
-            $"Name ({bankTranslation.Name}) is already added"
+            $"Language ({language}): Name ({bankTranslation.Name}) is already added "
           ));
         }
       }

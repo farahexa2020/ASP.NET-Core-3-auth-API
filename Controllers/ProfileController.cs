@@ -24,8 +24,8 @@ namespace WebApp1.Controllers
       this.mapper = mapper;
     }
 
-    [HttpPut]
-    public async Task<IActionResult> UpdateProfileAsync([FromBody] UpdateUserResource updateUserResource, [FromQuery] string id)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateProfileAsync([FromRoute] string id, [FromBody] UpdateUserResource updateUserResource)
     {
       if (ModelState.IsValid)
       {
@@ -61,6 +61,88 @@ namespace WebApp1.Controllers
         ModelState.Keys
         .SelectMany(key => ModelState[key].Errors.Select
                       (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
+    }
+
+    [HttpPost("{id}/AddPhoneNumber")]
+    // [ValidateAntiForgeryToken]
+    public async Task<ActionResult> AddPhoneNumber([FromRoute] string id, [FromQuery] string phoneNumber)
+    {
+      if (ModelState.IsValid)
+      {
+        var user = await this.userManager.FindByIdAsync(id);
+        user.PhoneNumber = phoneNumber;
+
+        var result = await this.userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+          // Generate the token 
+          var code = await this.userManager.GenerateChangePhoneNumberTokenAsync(user, phoneNumber);
+          // var message = new IdentityMessage
+          // {
+          //   Destination = PhoneNumber,
+          //   Body = "Your security code is: " + code
+          // };
+          return new OkObjectResult(new OkResource(
+            "You security code is: " + code
+          ));
+        }
+
+        foreach (IdentityError error in result.Errors)
+        {
+          ModelState.AddModelError("", error.Description);
+        }
+      }
+
+      // If we got this far, something failed, redisplay form
+      ModelState.AddModelError("", "Failed to send confirmation code");
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
+    }
+
+    [HttpPost("{id}/VerifyPhoneNumber")]
+    public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string id, [FromBody] VerifyPhoneNumberResource verifyPhoneNumberResource)
+    {
+      if (ModelState.IsValid)
+      {
+        var user = await this.userManager.FindByIdAsync(id);
+
+        var result = await this.userManager.ChangePhoneNumberAsync(
+          user,
+          verifyPhoneNumberResource.PhoneNumber,
+          verifyPhoneNumberResource.Code
+        );
+        if (result.Succeeded)
+        {
+          user.PhoneNumberConfirmed = true;
+          var updateResult = await this.userManager.UpdateAsync(user);
+          if (updateResult.Succeeded)
+          {
+            return new OkObjectResult(new OkResource(
+            "Congratulation , the phone number is confirmed successfully"
+          ));
+          }
+        }
+
+        foreach (IdentityError error in result.Errors)
+        {
+          ModelState.AddModelError("", error.Description);
+        }
+      }
+
+      // If we got this far, something failed, redisplay form
+      ModelState.AddModelError("", "Failed to verify phone");
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
         .ToList()
       ));
     }

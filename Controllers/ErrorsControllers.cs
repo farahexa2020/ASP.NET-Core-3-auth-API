@@ -6,10 +6,10 @@ namespace WebApp1.Controllers
 {
   [Route("api/[controller]")]
   [ApiController]
-  public class ErrorsControllers
+  public class ErrorsController : Controller
   {
     [Route("{code}")]
-    [HttpGet]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult Error(int code)
     {
       HttpStatusCode parsedCode = (HttpStatusCode)code;

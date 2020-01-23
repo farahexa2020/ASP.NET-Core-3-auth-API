@@ -12,10 +12,10 @@ namespace WebApp1.Services
 {
   public class ManageAdminRolesHandler : AuthorizationHandler<ManageAdminRolesRequiremnet>
   {
-    public IHttpContextAccessor HttpContextAccessor { get; set; }
+    public IHttpContextAccessor httpContextAccessor { get; set; }
     public ManageAdminRolesHandler(IHttpContextAccessor httpContextAccessor) : base()
     {
-      this.HttpContextAccessor = httpContextAccessor;
+      this.httpContextAccessor = httpContextAccessor;
     }
 
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ManageAdminRolesRequiremnet requirement)
@@ -23,9 +23,7 @@ namespace WebApp1.Services
       try
       {
         string loggedInUserId = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-        var routeValues = this.HttpContextAccessor.HttpContext.Request.RouteValues;
-        object editedUserId;
-        routeValues.TryGetValue("id", out editedUserId);
+        var editedUserId = this.httpContextAccessor.HttpContext.Request.Query["id"];
 
         if (context.User.IsInRole(Roles.Admin.ToString()) && loggedInUserId.ToLower() != editedUserId.ToString().ToLower())
         {

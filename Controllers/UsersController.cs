@@ -260,8 +260,8 @@ namespace WebApp1.Controllers
     }
 
     [Authorize(Policy = "EditRolePolicy")]
-    [HttpPost("{id}/AssignRole")]
-    public async Task<IActionResult> AddUserToRoleAsync(string id, [FromQuery] string roleId)
+    [HttpPost("AssignRole")]
+    public async Task<IActionResult> AddUserToRoleAsync([FromQuery] string id, [FromQuery] string roleId)
     {
       var user = await this.userManager.FindByIdAsync(id);
       if (user == null)
@@ -311,8 +311,8 @@ namespace WebApp1.Controllers
     }
 
     [Authorize(Policy = "EditRolePolicy")]
-    [HttpDelete("{id}/AssignRole")]
-    public async Task<IActionResult> RemoveUserFromRoleAsync(string id, [FromQuery] string roleId)
+    [HttpDelete("AssignRole")]
+    public async Task<IActionResult> RemoveUserFromRoleAsync([FromQuery] string id, [FromQuery] string roleId)
     {
       var user = await this.userManager.FindByIdAsync(id);
       if (user == null)

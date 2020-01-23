@@ -21,7 +21,9 @@ namespace WebApp1.Services
       try
       {
         string loggedInUserId = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-        var editedUserId = this.httpContextAccessor.HttpContext.Request.Query["id"];
+        var routeValues = this.httpContextAccessor.HttpContext.Request.RouteValues;
+        object editedUserId;
+        routeValues.TryGetValue("id", out editedUserId);
 
         if (context.User.IsInRole(Roles.User.ToString()) && loggedInUserId.ToLower() == editedUserId.ToString().ToLower())
         {

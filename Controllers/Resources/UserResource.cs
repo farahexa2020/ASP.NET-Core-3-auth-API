@@ -18,6 +18,8 @@ namespace WebApp1.Controllers.Resources
 
     public string PhoneNumber { get; set; }
 
+    public bool PhoneNumberConfirmed { get; set; }
+
     public bool IsActive { get; set; }
 
     public DateTime CreatedAt { get; set; }
