@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core.Models;
 
-namespace WebApp1.Data
+namespace WebApp1.Persistence
 {
   public class DataDbContext : IdentityDbContext<
         ApplicationUser, ApplicationRole, string,

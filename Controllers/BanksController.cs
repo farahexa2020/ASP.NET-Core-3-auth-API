@@ -12,10 +12,13 @@ using System.Security.Claims;
 using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using WebApp1.Controllers.Resources;
 
 namespace WebApp1.Controllers
 {
-  [Route("api/banks")]
+  [Authorize(Policy = "AdminPolicy")]
+  [Route("api/[controller]")]
+  [ApiController]
   public class BanksController : Controller
   {
     private readonly IMapper mapper;
@@ -29,6 +32,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetActiveBanks()
     {
       var language = Request.Headers["Accept-Language"].ToString();
@@ -42,7 +46,24 @@ namespace WebApp1.Controllers
       ));
     }
 
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllBanks([FromQuery] BankQueryResource bankQueryResource)
+    {
+      var language = Request.Headers["Accept-Language"].ToString();
+
+      var bankQuery = this.mapper.Map<BankQueryResource, BankQuery>(bankQueryResource);
+
+      var queryResult = await this.bankRepository.GetBanksAsync(bankQuery, language);
+      var result = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
+
+      return new OkObjectResult(new OkResource(
+        "All Banks",
+        result
+      ));
+    }
+
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult> GetBankById(int id)
     {
       var language = Request.Headers["Accept-Language"].ToString();
@@ -98,9 +119,33 @@ namespace WebApp1.Controllers
         catch (DbUpdateException e)
         {
           return new BadRequestObjectResult(new BadRequestResource(
-            $"Language ({language}): Name ({bankTranslation.Name}) is already added "
+            $"Language ({language}): Name is already added "
           ));
         }
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
+    }
+
+    [HttpPut("{id}/Translations")]
+    public async Task<IActionResult> UpdateBankTranslation([FromRoute] int id, [FromBody] BankTranslation bankTranslation)
+    {
+      if (ModelState.IsValid)
+      {
+        var language = Request.Headers["Accept-Language"].ToString();
+        await this.bankRepository.UpdateBankTranslation(id, bankTranslation, language);
+
+        await this.unitOfWork.CompleteAsync();
+
+        return new OkObjectResult(new OkResource(
+          $"Bank ({id}) updated"
+        ));
       }
 
       return new BadRequestObjectResult(new BadRequestResource(

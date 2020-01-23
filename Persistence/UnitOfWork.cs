@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using WebApp1.Core;
-using WebApp1.Data;
 
 namespace WebApp1.Persistence
 {

@@ -1,6 +1,6 @@
 namespace WebApp1.Controllers.Resources
 {
-  public class VerifyPhoneNumberResource
+  public class PhoneNumberConfirmationResource
   {
     public string PhoneNumber { get; set; }
 

@@ -15,7 +15,6 @@ using WebApp1.Controllers.Resources;
 using WebApp1.Controllers.Resources.ApiResponse;
 using WebApp1.Core;
 using WebApp1.Core.Models;
-using WebApp1.Data;
 
 namespace WebApp1.Controllers
 {

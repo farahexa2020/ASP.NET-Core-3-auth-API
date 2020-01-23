@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core;
 using WebApp1.Core.Models;
-using WebApp1.Data;
 
 namespace WebApp1.Persistence
 {

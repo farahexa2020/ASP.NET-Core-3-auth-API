@@ -7,7 +7,7 @@ namespace WebApp1.Core
 {
   public interface IBankRepository
   {
-    Task<IEnumerable<Bank>> GetBanksAsync();
+    Task<QueryResult<Bank>> GetBanksAsync(BankQuery queryObj, string languageId);
 
     Task<Bank> GetBankByIdAsync(int id);
 
@@ -20,5 +20,7 @@ namespace WebApp1.Core
     Task<IEnumerable<BankTranslation>> GetBankTranslation(int bankId);
 
     Task AddBankTranslation(int bankId, BankTranslation bankTranslation);
+
+    Task UpdateBankTranslation(int bankId, BankTranslation bankTranslation, string languageId);
   }
 }

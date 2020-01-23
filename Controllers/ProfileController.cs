@@ -107,7 +107,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpPost("{id}/VerifyPhoneNumber")]
-    public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string id, [FromBody] VerifyPhoneNumberResource verifyPhoneNumberResource)
+    public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string id, [FromBody] PhoneNumberConfirmationResource verifyPhoneNumberResource)
     {
       if (ModelState.IsValid)
       {
