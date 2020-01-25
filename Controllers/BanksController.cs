@@ -37,12 +37,12 @@ namespace WebApp1.Controllers
     {
       var language = Request.Headers["Accept-Language"].ToString();
 
-      var banks = await this.bankRepository.GetActiveBanksAsync();
-      var result = this.mapper.Map<IEnumerable<Bank>, IEnumerable<BankResource>>(banks, opt => opt.Items["language"] = language);
+      var queryResult = await this.bankRepository.GetActiveBanksAsync();
+      var queryResultResource = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
 
       return new OkObjectResult(new OkResource(
         "All Active Banks",
-        result
+        queryResultResource
       ));
     }
 
@@ -54,17 +54,17 @@ namespace WebApp1.Controllers
       var bankQuery = this.mapper.Map<BankQueryResource, BankQuery>(bankQueryResource);
 
       var queryResult = await this.bankRepository.GetBanksAsync(bankQuery, language);
-      var result = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
+      var queryResultResource = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
 
       return new OkObjectResult(new OkResource(
         "All Banks",
-        result
+        queryResultResource
       ));
     }
 
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<ActionResult> GetBankById(int id)
+    public async Task<ActionResult> GetBankById(string id)
     {
       var language = Request.Headers["Accept-Language"].ToString();
 
@@ -89,6 +89,7 @@ namespace WebApp1.Controllers
       if (!ModelState.IsValid) return BadRequest(ModelState);
 
       Bank bank = this.mapper.Map<CreateBankResource, Bank>(resource);
+      bank.CreatedAt = DateTime.Now;
       bank.UpdatedAt = DateTime.Now;
       bank.UpdatedBy = userId;
 
@@ -101,11 +102,14 @@ namespace WebApp1.Controllers
     }
 
     [HttpPost("{id}/Translations")]
-    public async Task<IActionResult> AddBankTranslation([FromRoute] int id, [FromBody] BankTranslation bankTranslation)
+    public async Task<IActionResult> AddBankTranslation([FromRoute] string id, [FromBody] BankTranslationResource bankTranslationResource)
     {
       if (ModelState.IsValid)
       {
         var language = Request.Headers["Accept-Language"].ToString();
+
+        var bankTranslation = this.mapper.Map<BankTranslationResource, BankTranslation>(bankTranslationResource);
+
         try
         {
           await this.bankRepository.AddBankTranslation(id, bankTranslation);
@@ -134,10 +138,12 @@ namespace WebApp1.Controllers
     }
 
     [HttpPut("{id}/Translations")]
-    public async Task<IActionResult> UpdateBankTranslation([FromRoute] int id, [FromBody] BankTranslation bankTranslation)
+    public async Task<IActionResult> UpdateBankTranslation([FromRoute] string id, [FromBody] BankTranslationResource bankTranslationResource)
     {
       if (ModelState.IsValid)
       {
+        var bankTranslation = this.mapper.Map<BankTranslationResource, BankTranslation>(bankTranslationResource);
+
         var language = Request.Headers["Accept-Language"].ToString();
         await this.bankRepository.UpdateBankTranslation(id, bankTranslation, language);
 
@@ -157,9 +163,32 @@ namespace WebApp1.Controllers
       ));
     }
 
+    [HttpDelete("{id}/Translations")]
+    public async Task<IActionResult> DeleteBankTranslation([FromRoute] string id, [FromQuery] string languageId)
+    {
+      if (ModelState.IsValid)
+      {
+        await this.bankRepository.DeleteBankTranslation(id, languageId);
+
+        await this.unitOfWork.CompleteAsync();
+
+        return new OkObjectResult(new OkResource(
+          $"Bank ({id}) updated, ({languageId}) name deleted"
+        ));
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(
+        "Invalid request",
+        ModelState.Keys
+        .SelectMany(key => ModelState[key].Errors.Select
+                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
+        .ToList()
+      ));
+    }
+
     [Authorize(Policy = "AdminPolicy")]
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteBank([FromRoute] int id)
+    public async Task<ActionResult> DeleteBank([FromRoute] string id)
     {
       var bank = await this.bankRepository.GetBankByIdAsync(id);
       if (bank == null)

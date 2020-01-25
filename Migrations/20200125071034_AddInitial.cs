@@ -52,6 +52,39 @@ namespace WebApp1.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Banks",
+                columns: table => new
+                {
+                    Id = table.Column<string>(nullable: false),
+                    KeyName = table.Column<string>(maxLength: 255, nullable: false),
+                    ImageUrl = table.Column<string>(maxLength: 255, nullable: true),
+                    AccountHolderName = table.Column<string>(maxLength: 255, nullable: false),
+                    AccountNumber = table.Column<string>(maxLength: 255, nullable: false),
+                    SequenceNumber = table.Column<int>(nullable: false),
+                    SequenceNumberUpdatedAt = table.Column<DateTime>(nullable: false),
+                    IsActive = table.Column<bool>(nullable: false),
+                    CreatedAt = table.Column<DateTime>(nullable: false),
+                    UpdatedAt = table.Column<DateTime>(nullable: false),
+                    UpdatedBy = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Banks", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Languages",
+                columns: table => new
+                {
+                    Id = table.Column<string>(nullable: false),
+                    Name = table.Column<string>(maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Languages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -161,8 +194,7 @@ namespace WebApp1.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(nullable: false),
                     UserId = table.Column<string>(nullable: false),
                     AccessToken = table.Column<string>(nullable: false),
                     Token = table.Column<string>(maxLength: 255, nullable: false),
@@ -177,6 +209,31 @@ namespace WebApp1.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BankTranslations",
+                columns: table => new
+                {
+                    LanguageId = table.Column<string>(nullable: false),
+                    BankId = table.Column<string>(nullable: false),
+                    Name = table.Column<string>(maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BankTranslations", x => new { x.LanguageId, x.BankId });
+                    table.ForeignKey(
+                        name: "FK_BankTranslations_Banks_BankId",
+                        column: x => x.BankId,
+                        principalTable: "Banks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BankTranslations_Languages_LanguageId",
+                        column: x => x.LanguageId,
+                        principalTable: "Languages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -219,6 +276,11 @@ namespace WebApp1.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BankTranslations_BankId",
+                table: "BankTranslations",
+                column: "BankId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
                 table: "RefreshTokens",
                 column: "UserId");
@@ -242,10 +304,19 @@ namespace WebApp1.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "BankTranslations");
+
+            migrationBuilder.DropTable(
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Banks");
+
+            migrationBuilder.DropTable(
+                name: "Languages");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

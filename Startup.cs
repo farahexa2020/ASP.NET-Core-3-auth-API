@@ -40,13 +40,13 @@ namespace WebApp1
     {
       services.AddControllers().AddNewtonsoftJson();
 
-      services.AddDbContext<DataDbContext>(options =>
+      services.AddDbContext<ApplicationDbContext>(options =>
           options.UseSqlServer(
               Configuration.GetConnectionString("DefaultConnection")));
 
       // options => options.SignIn.RequireConfirmedAccount = true
       services.AddIdentity<ApplicationUser, ApplicationRole>()
-          .AddEntityFrameworkStores<DataDbContext>()
+          .AddEntityFrameworkStores<ApplicationDbContext>()
           .AddDefaultTokenProviders();
 
       // Register the Swagger generator, defining 1 or more Swagger documents

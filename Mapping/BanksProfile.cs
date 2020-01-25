@@ -24,7 +24,14 @@ namespace WebApp1.Mapping
         .ForMember(br => br.Name, opt => opt.MapFrom((b, br, nameof, context) =>
         {
           var langauge = (string)context.Items["language"];
-          return b.Translations.Where(t => t.LanguageId == langauge).SingleOrDefault()?.Name;
+          if (b.Translations.Select(bt => bt.LanguageId).Contains(langauge))
+          {
+            return b.Translations.Where(t => t.LanguageId == langauge).SingleOrDefault()?.Name;
+          }
+          else
+          {
+            return b.KeyName;
+          }
         }));
 
       CreateMap(typeof(QueryResult<>), typeof(QueryResultResource<>));

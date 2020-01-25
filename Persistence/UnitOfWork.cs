@@ -5,8 +5,8 @@ namespace WebApp1.Persistence
 {
   public class UnitOfWork : IUnitOfWork
   {
-    private readonly DataDbContext context;
-    public UnitOfWork(DataDbContext context)
+    private readonly ApplicationDbContext context;
+    public UnitOfWork(ApplicationDbContext context)
     {
       this.context = context;
 

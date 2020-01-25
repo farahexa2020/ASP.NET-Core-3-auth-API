@@ -9,7 +9,7 @@ using WebApp1.Core.Models;
 
 namespace WebApp1.Persistence
 {
-  public class DataDbContext : IdentityDbContext<
+  public class ApplicationDbContext : IdentityDbContext<
         ApplicationUser, ApplicationRole, string,
         IdentityUserClaim<string>, ApplicationUserRole, IdentityUserLogin<string>,
         IdentityRoleClaim<string>, IdentityUserToken<string>>
@@ -19,7 +19,7 @@ namespace WebApp1.Persistence
     public DbSet<BankTranslation> BankTranslations { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-    public DataDbContext(DbContextOptions<DataDbContext> options)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }

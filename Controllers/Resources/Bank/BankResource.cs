@@ -1,8 +1,10 @@
+using System;
+
 namespace WebApp1.Controllers.Resources.Bank
 {
   public class BankResource
   {
-    public int Id { get; set; }
+    public string Id { get; set; }
 
     public string Name { get; set; }
 
@@ -11,5 +13,11 @@ namespace WebApp1.Controllers.Resources.Bank
     public string AccountHolderName { get; set; }
 
     public string AccountNumber { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
   }
 }

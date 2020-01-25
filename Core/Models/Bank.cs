@@ -9,7 +9,8 @@ namespace WebApp1.Core.Models
   [Table("Banks")]
   public class Bank
   {
-    public int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public string Id { get; set; }
 
     [Required]
     [StringLength(255)]

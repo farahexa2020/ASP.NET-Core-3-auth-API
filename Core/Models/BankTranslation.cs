@@ -12,7 +12,7 @@ namespace WebApp1.Core.Models
     public Language Language { get; set; }
 
     [Required]
-    public int BankId { get; set; }
+    public string BankId { get; set; }
 
     public Bank Bank { get; set; }
 

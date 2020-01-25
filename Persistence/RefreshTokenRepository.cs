@@ -8,8 +8,8 @@ namespace WebApp1.Persistence
 {
   public class RefreshTokenRepository : IRefreshTokenRepository
   {
-    private readonly DataDbContext context;
-    public RefreshTokenRepository(DataDbContext context)
+    private readonly ApplicationDbContext context;
+    public RefreshTokenRepository(ApplicationDbContext context)
     {
       this.context = context;
     }

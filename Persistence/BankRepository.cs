@@ -13,8 +13,8 @@ namespace WebApp1.Persistence
 {
   public class BankRepository : IBankRepository
   {
-    private readonly DataDbContext context;
-    public BankRepository(DataDbContext context)
+    private readonly ApplicationDbContext context;
+    public BankRepository(ApplicationDbContext context)
     {
       this.context = context;
 
@@ -26,10 +26,9 @@ namespace WebApp1.Persistence
 
       var query = this.context.Banks
                       .Include(b => b.Translations)
-                      .Where(b => b.IsActive)
                       .AsQueryable();
 
-      if (string.IsNullOrWhiteSpace(queryObj.Name))
+      if (!string.IsNullOrWhiteSpace(queryObj.Name))
       {
         query = query.Where(b => b.Translations.Select(t => t.LanguageId).Contains(languageId));
       }
@@ -39,14 +38,26 @@ namespace WebApp1.Persistence
         query = query.Where(u => u.IsActive == queryObj.IsActive.Value);
       }
 
+      var queryFirst = query.Where(b => b.Translations.Select(t => t.LanguageId).Contains(languageId));
+      var querySecond = query.Where(b => !b.Translations.Select(t => t.LanguageId).Contains(languageId));
+
       var columnsMap = new Dictionary<string, Expression<Func<Bank, object>>>()
       {
-        ["Name"] = u => u.Translations.Select(t => t.Name)
+        ["name"] = b => (
+          b.Translations.Where(bt => bt.LanguageId == languageId).FirstOrDefault() != null ? (
+            b.Translations.Where(bt => bt.LanguageId == languageId).Select(bt => bt.Name).FirstOrDefault()
+          ) : (
+            b.KeyName
+          )
+        )
       };
 
       result.TotalItems = await query.CountAsync();
 
-      query = query.ApplyOrdering(queryObj, columnsMap);
+      queryFirst = queryFirst.ApplyOrdering(queryObj, columnsMap);
+      querySecond = querySecond.ApplyOrdering(queryObj, columnsMap);
+
+      query = queryFirst.Union(querySecond);
 
       query = query.ApplyPaging(queryObj);
 
@@ -55,7 +66,7 @@ namespace WebApp1.Persistence
       return result;
     }
 
-    public async Task<Bank> GetBankByIdAsync(int id)
+    public async Task<Bank> GetBankByIdAsync(string id)
     {
       return await this.context.Banks
                     .Include(b => b.Translations)
@@ -63,12 +74,18 @@ namespace WebApp1.Persistence
                     .FirstOrDefaultAsync();
     }
 
-    public async Task<IEnumerable<Bank>> GetActiveBanksAsync()
+    public async Task<QueryResult<Bank>> GetActiveBanksAsync()
     {
-      return await this.context.Banks
+      var result = new QueryResult<Bank>();
+      var query = this.context.Banks
           .Include(b => b.Translations)
           .Where(b => b.IsActive)
-          .ToListAsync();
+          .AsQueryable();
+
+      result.TotalItems = await query.CountAsync();
+      result.Items = await query.ToListAsync();
+
+      return result;
     }
 
     public void Add(Bank bank)
@@ -81,21 +98,22 @@ namespace WebApp1.Persistence
       this.context.Remove(bank);
     }
 
-    public async Task<IEnumerable<BankTranslation>> GetBankTranslation(int bankId)
+    public async Task<IEnumerable<BankTranslation>> GetBankTranslation(string bankId)
     {
       return await this.context.BankTranslations.Where(bt => bt.BankId == bankId).ToListAsync();
     }
 
-    public async Task AddBankTranslation(int bankId, BankTranslation bankTranslation)
+    public async Task AddBankTranslation(string bankId, BankTranslation bankTranslation)
     {
       var bank = await this.context.Banks.Where(b => b.Id == bankId).SingleOrDefaultAsync();
+      bank.UpdatedAt = DateTime.Now;
 
       bank.Translations.Add(bankTranslation);
 
       this.context.Update(bank);
     }
 
-    public async Task UpdateBankTranslation(int bankId, BankTranslation bankTranslation, string languageId)
+    public async Task UpdateBankTranslation(string bankId, BankTranslation bankTranslation, string languageId)
     {
       var bank = await this.context.Banks.Where(b => b.Id == bankId)
                                          .Include(b => b.Translations)
@@ -108,6 +126,24 @@ namespace WebApp1.Persistence
       }
 
       bank.Translations.Add(bankTranslation);
+      bank.UpdatedAt = DateTime.Now;
+
+      this.context.Update(bank);
+    }
+
+    public async Task DeleteBankTranslation(string bankId, string languageId)
+    {
+      var bank = await this.context.Banks.Where(b => b.Id == bankId)
+                                         .Include(b => b.Translations)
+                                         .SingleOrDefaultAsync();
+
+      if (bank.Translations.Select(t => t.LanguageId).Contains(languageId))
+      {
+        context.BankTranslations.Remove(bank.Translations.Where(t => t.LanguageId == languageId).FirstOrDefault());
+        bank.Translations.Remove(bank.Translations.Where(t => t.LanguageId == languageId).FirstOrDefault());
+      }
+
+      bank.UpdatedAt = DateTime.Now;
 
       this.context.Update(bank);
     }

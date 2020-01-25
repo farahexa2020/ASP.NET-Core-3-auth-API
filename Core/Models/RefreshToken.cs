@@ -7,7 +7,8 @@ namespace WebApp1.Core.Models
   [Table("RefreshTokens")]
   public class RefreshToken
   {
-    public int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public string Id { get; set; }
 
     [Required]
     public string UserId { get; set; }
