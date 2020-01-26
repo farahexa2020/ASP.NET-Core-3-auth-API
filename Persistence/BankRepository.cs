@@ -38,9 +38,6 @@ namespace WebApp1.Persistence
         query = query.Where(u => u.IsActive == queryObj.IsActive.Value);
       }
 
-      var queryFirst = query.Where(b => b.Translations.Select(t => t.LanguageId).Contains(languageId));
-      var querySecond = query.Where(b => !b.Translations.Select(t => t.LanguageId).Contains(languageId));
-
       var columnsMap = new Dictionary<string, Expression<Func<Bank, object>>>()
       {
         ["name"] = b => (
@@ -54,11 +51,7 @@ namespace WebApp1.Persistence
 
       result.TotalItems = await query.CountAsync();
 
-      queryFirst = queryFirst.ApplyOrdering(queryObj, columnsMap);
-      querySecond = querySecond.ApplyOrdering(queryObj, columnsMap);
-
-      query = queryFirst.Union(querySecond);
-
+      query = query.ApplyOrdering(queryObj, columnsMap);
       query = query.ApplyPaging(queryObj);
 
       result.Items = await query.ToListAsync();

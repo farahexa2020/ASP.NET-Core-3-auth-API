@@ -23,6 +23,7 @@ using WebApp1.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using WebApp1.Middlewares;
+using WebApp1.Hubs;
 
 namespace WebApp1
 {
@@ -33,11 +34,22 @@ namespace WebApp1
       Configuration = configuration;
     }
 
+    readonly string MyAllowSpecificOrigins = "myAllowSpecificOrigins";
+
     public IConfiguration Configuration { get; }
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+      services.AddCors(options =>
+        {
+          options.AddPolicy(MyAllowSpecificOrigins,
+          builder =>
+          {
+            builder.WithOrigins("*").AllowAnyHeader().AllowAnyMethod();
+          });
+        });
+
       services.AddControllers().AddNewtonsoftJson();
 
       services.AddDbContext<ApplicationDbContext>(options =>
@@ -115,6 +127,8 @@ namespace WebApp1
       services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
 
       services.AddSingleton<IAuthorizationHandler, ManageUserHandler>();
+
+      services.AddSignalR();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -132,6 +146,8 @@ namespace WebApp1
       //   app.UseHsts();
       // }
 
+      app.UseCors(MyAllowSpecificOrigins);
+
       // Enable middleware to serve generated Swagger as a JSON endpoint.
       app.UseSwagger();
 
@@ -144,7 +160,6 @@ namespace WebApp1
 
       app.UseExceptionHandler("/api/Errors/500");
       app.UseStatusCodePagesWithReExecute("/api/Errors/{0}");
-
 
       app.UseCheckLanguageHeader();
 
@@ -159,6 +174,7 @@ namespace WebApp1
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
+        endpoints.MapHub<ValuesHub>("/Hubs/Values");
       });
     }
   }

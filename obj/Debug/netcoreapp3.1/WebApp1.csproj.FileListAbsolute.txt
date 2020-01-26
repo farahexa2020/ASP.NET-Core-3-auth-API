@@ -61,3 +61,4 @@ C:\Users\hp\Desktop\ExaAuthAPI\auth6\WebApp1\bin\Debug\netcoreapp3.1\Microsoft.O
 C:\Users\hp\Desktop\ExaAuthAPI\auth6\WebApp1\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\hp\Desktop\ExaAuthAPI\auth6\WebApp1\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\hp\Desktop\ExaAuthAPI\auth6\WebApp1\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\hp\Desktop\ExaAuthAPI\auth6\WebApp1\bin\Debug\netcoreapp3.1\System.Net.WebSockets.WebSocketProtocol.dll
