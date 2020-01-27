@@ -6,6 +6,10 @@ namespace WebApp1.Hubs
 {
   public class ValuesHub : Hub<IValuesClient>
   {
+    public string GetConnectionId()
+    {
+      return Context.ConnectionId;
+    }
     public async Task Add(Value value)
     {
       await Clients.All.Add(value);

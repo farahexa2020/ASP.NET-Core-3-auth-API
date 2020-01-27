@@ -11,7 +11,12 @@ namespace WebApp1.Mapping
       CreateMap<ValueResource, Value>()
           .ForMember(v => v.Id, opt => opt.Ignore());
 
+      CreateMap<ValueNotificationResource, ValueNotification>()
+          .ForMember(v => v.Id, opt => opt.Ignore());
+
       CreateMap<Value, ValueResource>();
+
+      CreateMap<ValueNotification, ValueNotificationResource>();
     }
   }
 }

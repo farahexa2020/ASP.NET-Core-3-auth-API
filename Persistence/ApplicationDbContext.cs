@@ -19,6 +19,7 @@ namespace WebApp1.Persistence
     public DbSet<BankTranslation> BankTranslations { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Value> Values { get; set; }
+    public DbSet<ValueNotification> ValueNotifications { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

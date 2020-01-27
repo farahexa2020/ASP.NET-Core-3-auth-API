@@ -46,7 +46,10 @@ namespace WebApp1
           options.AddPolicy(MyAllowSpecificOrigins,
           builder =>
           {
-            builder.WithOrigins("*").AllowAnyHeader().AllowAnyMethod();
+            builder.AllowAnyHeader()
+                .AllowAnyMethod()
+                .SetIsOriginAllowed((host) => true)
+                .AllowCredentials();
           });
         });
 
@@ -124,9 +127,13 @@ namespace WebApp1
 
       services.AddScoped<IBankRepository, BankRepository>();
 
+      services.AddScoped<IValueNotificationRepository, ValueNotificationRepository>();
+
       services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
 
       services.AddSingleton<IAuthorizationHandler, ManageUserHandler>();
+
+      services.AddSingleton<IUserConnectionManager, UserConnectionManager>();
 
       services.AddSignalR();
     }
@@ -175,6 +182,7 @@ namespace WebApp1
       {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
         endpoints.MapHub<ValuesHub>("/Hubs/Values");
+        endpoints.MapHub<NotificationUserHub>("/Hubs/NotificationUser");
       });
     }
   }
