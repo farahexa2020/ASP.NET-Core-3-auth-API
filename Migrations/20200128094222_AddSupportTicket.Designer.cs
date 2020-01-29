@@ -10,8 +10,8 @@ using WebApp1.Persistence;
 namespace WebApp1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20200127115006_AddValueNotifications")]
-    partial class AddValueNotifications
+    [Migration("20200128094222_AddSupportTicket")]
+    partial class AddSupportTicket
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -346,42 +346,91 @@ namespace WebApp1.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("WebApp1.Core.Models.Value", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Values");
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.ValueNotification", b =>
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicket", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("RecieverId")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Issue")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("SenderId")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("StatusId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("message")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("TypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("seen")
-                        .HasColumnType("bit");
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ValueNotifications");
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("TypeId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SupportTickets");
+                });
+
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicketStatus", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SupportTicketStatuses");
+                });
+
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicketType", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SupportTicketTypes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -452,6 +501,27 @@ namespace WebApp1.Migrations
 
             modelBuilder.Entity("WebApp1.Core.Models.RefreshToken", b =>
                 {
+                    b.HasOne("WebApp1.Core.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicket", b =>
+                {
+                    b.HasOne("WebApp1.Core.Models.SupportTicketStatus", "Status")
+                        .WithMany("Tickets")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApp1.Core.Models.SupportTicketType", "Type")
+                        .WithMany("Tickets")
+                        .HasForeignKey("TypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("WebApp1.Core.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")

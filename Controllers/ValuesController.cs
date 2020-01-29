@@ -46,63 +46,63 @@ namespace WebApp1.Controllers
       this.context = context;
 
     }
-    [HttpGet]
-    public async Task<IEnumerable<ValueResource>> GetValues()
-    {
-      var values = await this.context.Values.ToListAsync();
-      var result = this.mapper.Map<IEnumerable<Value>, IEnumerable<ValueResource>>(values);
-      return result;
-    }
+    // [HttpGet]
+    // public async Task<IEnumerable<ValueResource>> GetValues()
+    // {
+    //   var values = await this.context.Values.ToListAsync();
+    //   var result = this.mapper.Map<IEnumerable<Value>, IEnumerable<ValueResource>>(values);
+    //   return result;
+    // }
 
-    [HttpPost]
-    public async Task<IActionResult> AddValue([FromQuery] string userId, [FromBody] ValueResource valueResource)
-    {
-      var value = this.mapper.Map<ValueResource, Value>(valueResource);
+    // [HttpPost]
+    // public async Task<IActionResult> AddValue([FromQuery] string userId, [FromBody] ValueResource valueResource)
+    // {
+    //   var value = this.mapper.Map<ValueResource, Value>(valueResource);
 
-      this.context.Add(value);
+    //   this.context.Add(value);
 
-      var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-      var notification = new ValueNotification()
-      {
-        SenderId = loggedInUserId,
-        RecieverId = userId,
-        message = $"User with id ({loggedInUserId}) added a value with name ({value.Name})",
-        seen = false
-      };
-      this.context.Add(notification);
+    //   var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    //   var notification = new ValueNotification()
+    //   {
+    //     SenderId = loggedInUserId,
+    //     RecieverId = userId,
+    //     message = $"User with id ({loggedInUserId}) added a value with name ({value.Name})",
+    //     seen = false
+    //   };
+    //   this.context.Add(notification);
 
-      this.context.SaveChanges();
+    //   this.context.SaveChanges();
 
-      try
-      {
-        var connections = this.userConnectionManager.GetUserConnections(userId);
-        if (connections != null && connections.Count > 0)
-        {
-          foreach (var connectionId in connections)
-          {
-            await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", notification.message);//send to user 
-          }
-        }
+    //   try
+    //   {
+    //     var connections = this.userConnectionManager.GetUserConnections(userId);
+    //     if (connections != null && connections.Count > 0)
+    //     {
+    //       foreach (var connectionId in connections)
+    //       {
+    //         await notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", notification.message);//send to user 
+    //       }
+    //     }
 
-        return new OkObjectResult("value added and message recieved");
-      }
-      catch (KeyNotFoundException e)
-      {
-        return new OkObjectResult("value added");
-      }
-    }
+    //     return new OkObjectResult("value added and message recieved");
+    //   }
+    //   catch (KeyNotFoundException e)
+    //   {
+    //     return new OkObjectResult("value added");
+    //   }
+    // }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteValue(int id)
-    {
-      var value = await this.context.Values.FindAsync(id);
+    // [HttpDelete("{id}")]
+    // public async Task<IActionResult> DeleteValue(int id)
+    // {
+    //   var value = await this.context.Values.FindAsync(id);
 
-      this.context.Remove(value);
-      this.context.SaveChanges();
+    //   this.context.Remove(value);
+    //   this.context.SaveChanges();
 
-      await this.hubContext.Clients.All.SendAsync("Delete", value);
+    //   await this.hubContext.Clients.All.SendAsync("Delete", value);
 
-      return new OkObjectResult("Value delted");
-    }
+    //   return new OkObjectResult("Value delted");
+    // }
   }
 }

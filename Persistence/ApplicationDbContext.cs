@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core.Models;
+using WebApp1.Core.Models.Support;
 
 namespace WebApp1.Persistence
 {
@@ -18,8 +19,14 @@ namespace WebApp1.Persistence
     public DbSet<Language> Languages { get; set; }
     public DbSet<BankTranslation> BankTranslations { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
-    public DbSet<Value> Values { get; set; }
-    public DbSet<ValueNotification> ValueNotifications { get; set; }
+    public DbSet<SupportTicket> SupportTickets { get; set; }
+    public DbSet<SupportTicketTopic> SupportTicketTopics { get; set; }
+    public DbSet<SupportTicketStatus> SupportTicketStatuses { get; set; }
+    public DbSet<SupportTicketPriority> SupportTicketPriorities { get; set; }
+    public DbSet<SupportTicketResponse> SupportTicketResponses { get; set; }
+    public DbSet<SupportTicketMessage> SupportTicketMessages { get; set; }
+    // public DbSet<Value> Values { get; set; }
+    // public DbSet<ValueNotification> ValueNotifications { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

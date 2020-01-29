@@ -1,12 +1,13 @@
 namespace WebApp1.Core.Models
 {
-    public enum Roles
-    {
-        Admin = 1,
-        User = 2,
-        Seller = 3,
-        Buyer = 4,
-        Induvidual = 5,
-        Business
-    }
+  public enum Roles
+  {
+    Admin = 1,
+    User = 2,
+    Support = 3,
+    Seller = 4,
+    Buyer = 5,
+    Induvidual = 6,
+    Business = 7
+  }
 }

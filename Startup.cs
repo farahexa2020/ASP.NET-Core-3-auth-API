@@ -24,6 +24,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using WebApp1.Middlewares;
 using WebApp1.Hubs;
+using WebApp1.Core.ISupportRepositories;
+using WebApp1.Persistence.SupportRepositories;
 
 namespace WebApp1
 {
@@ -127,7 +129,17 @@ namespace WebApp1
 
       services.AddScoped<IBankRepository, BankRepository>();
 
-      services.AddScoped<IValueNotificationRepository, ValueNotificationRepository>();
+      services.AddScoped<ITicketRepository, TicketRepository>();
+
+      services.AddScoped<ITicketTopicRepository, TicketTopicRepository>();
+
+      services.AddScoped<ITicketStatusRepository, TicketStatusRepository>();
+
+      services.AddScoped<ITicketPriorityRepository, TicketPriorityRepository>();
+
+      services.AddScoped<ITicketTopicRepository, TicketTopicRepository>();
+
+      // services.AddScoped<IValueNotificationRepository, ValueNotificationRepository>();
 
       services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
 
@@ -139,7 +151,11 @@ namespace WebApp1
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app,
+                          IWebHostEnvironment env,
+                          ApplicationDbContext context,
+                          UserManager<ApplicationUser> userManager,
+                          RoleManager<ApplicationRole> roleManager)
     {
       // if (env.IsDevelopment())
       // {
@@ -177,6 +193,8 @@ namespace WebApp1
 
       app.UseAuthentication();
       app.UseAuthorization();
+
+      MySeedClass.Seed(context, roleManager, userManager);
 
       app.UseEndpoints(endpoints =>
       {

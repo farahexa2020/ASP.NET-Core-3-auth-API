@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp1.Persistence;
 
 namespace WebApp1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200128110727_AddSupportTicketType_StatusDescription")]
+    partial class AddSupportTicketType_StatusDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -344,21 +346,14 @@ namespace WebApp1.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicket", b =>
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicket", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("AssigneeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Issue")
                         .IsRequired()
@@ -368,18 +363,12 @@ namespace WebApp1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("SupportTicketPriorityId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("TopicId")
+                    b.Property<string>("TypeId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -387,108 +376,16 @@ namespace WebApp1.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssigneeId");
-
                     b.HasIndex("StatusId");
 
-                    b.HasIndex("SupportTicketPriorityId");
-
-                    b.HasIndex("TopicId");
+                    b.HasIndex("TypeId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("SupportTickets");
                 });
 
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketMessage", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("PostedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TicketId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TicketId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("SupportTicketMessages");
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketPriority", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(255)")
-                        .HasMaxLength(255);
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SupportTicketPriorities");
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketResponse", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("PostedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TicketId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TicketId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("SupportTicketResponses");
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketStatus", b =>
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicketStatus", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
@@ -512,16 +409,13 @@ namespace WebApp1.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("SupportTicketStatuses");
                 });
 
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketTopic", b =>
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicketType", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
@@ -546,12 +440,9 @@ namespace WebApp1.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
-                    b.ToTable("SupportTicketTopics");
+                    b.ToTable("SupportTicketTypes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -629,58 +520,17 @@ namespace WebApp1.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicket", b =>
+            modelBuilder.Entity("WebApp1.Core.Models.SupportTicket", b =>
                 {
-                    b.HasOne("WebApp1.Core.Models.ApplicationUser", "Assignee")
-                        .WithMany()
-                        .HasForeignKey("AssigneeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("WebApp1.Core.Models.Support.SupportTicketStatus", "Status")
+                    b.HasOne("WebApp1.Core.Models.SupportTicketStatus", "Status")
                         .WithMany("Tickets")
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("WebApp1.Core.Models.Support.SupportTicketPriority", null)
+                    b.HasOne("WebApp1.Core.Models.SupportTicketType", "Type")
                         .WithMany("Tickets")
-                        .HasForeignKey("SupportTicketPriorityId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("WebApp1.Core.Models.Support.SupportTicketTopic", "Topic")
-                        .WithMany("Tickets")
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("WebApp1.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketMessage", b =>
-                {
-                    b.HasOne("WebApp1.Core.Models.Support.SupportTicket", "Ticket")
-                        .WithMany("Messages")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("WebApp1.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("WebApp1.Core.Models.Support.SupportTicketResponse", b =>
-                {
-                    b.HasOne("WebApp1.Core.Models.Support.SupportTicket", "Ticket")
-                        .WithMany("Responses")
-                        .HasForeignKey("TicketId")
+                        .HasForeignKey("TypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
