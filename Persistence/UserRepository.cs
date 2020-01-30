@@ -21,6 +21,15 @@ namespace WebApp1.Persistence
 
     }
 
+    private enum QueryFilter
+    {
+      FirstName = 1,
+      LastName = 2,
+      Email = 3,
+      IsActive = 4,
+      RoleId = 5
+    }
+
     public async Task<QueryResult<ApplicationUser>> GetUsers(UserQuery queryObj)
     {
       var result = new QueryResult<ApplicationUser>();
@@ -29,32 +38,18 @@ namespace WebApp1.Persistence
                                   .ThenInclude(ur => ur.Role)
                                   .AsQueryable();
 
-      if (!string.IsNullOrWhiteSpace(queryObj.FirstName))
+      var filterColumnsMap = new Dictionary<string, Expression<Func<ApplicationUser, bool>>>()
       {
-        query = query.Where(u => u.FirstName == queryObj.FirstName);
-      }
+        ["FirstName"] = u => u.FirstName == queryObj.FirstName,
+        ["LastName"] = u => u.LastName == queryObj.LastName,
+        ["Email"] = u => u.Email == queryObj.Email,
+        ["IsActive"] = u => u.IsActive == queryObj.IsActive,
+        ["RoleId"] = u => u.UserRoles.Select(ur => ur.RoleId).Contains(queryObj.RoleId)
+      };
 
-      if (!string.IsNullOrWhiteSpace(queryObj.LastName))
-      {
-        query = query.Where(u => u.LastName == queryObj.LastName);
-      }
+      query = this.ApplyUserFiltering(query, queryObj, filterColumnsMap);
 
-      if (!string.IsNullOrWhiteSpace(queryObj.Email))
-      {
-        query = query.Where(u => u.Email == queryObj.Email);
-      }
-
-      if (queryObj.IsActive.HasValue)
-      {
-        query = query.Where(u => u.IsActive == queryObj.IsActive.Value);
-      }
-
-      if (!string.IsNullOrWhiteSpace(queryObj.RoleId))
-      {
-        query = query.Where(u => u.UserRoles.Select(ur => ur.RoleId).Contains(queryObj.RoleId));
-      }
-
-      var columnsMap = new Dictionary<string, Expression<Func<ApplicationUser, object>>>()
+      var orderoColumnsMap = new Dictionary<string, Expression<Func<ApplicationUser, object>>>()
       {
         ["fisrtName"] = u => u.FirstName,
         ["lastName"] = u => u.LastName,
@@ -63,7 +58,7 @@ namespace WebApp1.Persistence
 
       result.TotalItems = await query.CountAsync();
 
-      query = query.ApplyOrdering(queryObj, columnsMap);
+      query = query.ApplyOrdering(queryObj, orderoColumnsMap);
 
       query = query.ApplyPaging(queryObj);
 
@@ -82,6 +77,36 @@ namespace WebApp1.Persistence
                                       .SingleOrDefaultAsync();
 
       return user;
+    }
+
+    private IQueryable<ApplicationUser> ApplyUserFiltering(IQueryable<ApplicationUser> query, UserQuery queryObj, Dictionary<string, Expression<Func<ApplicationUser, bool>>> columnsMap)
+    {
+      if (!string.IsNullOrWhiteSpace(queryObj.FirstName) && columnsMap.ContainsKey(QueryFilter.FirstName.ToString()))
+      {
+        query = query.Where(columnsMap[QueryFilter.FirstName.ToString()]);
+      }
+
+      if (!string.IsNullOrWhiteSpace(queryObj.LastName) && columnsMap.ContainsKey(QueryFilter.LastName.ToString()))
+      {
+        query = query.Where(columnsMap[QueryFilter.LastName.ToString()]);
+      }
+
+      if (!string.IsNullOrWhiteSpace(queryObj.Email) && columnsMap.ContainsKey(QueryFilter.Email.ToString()))
+      {
+        query = query.Where(columnsMap[QueryFilter.Email.ToString()]);
+      }
+
+      if (queryObj.IsActive.HasValue && columnsMap.ContainsKey(QueryFilter.IsActive.ToString()))
+      {
+        query = query.Where(columnsMap[QueryFilter.IsActive.ToString()]);
+      }
+
+      if (!string.IsNullOrWhiteSpace(queryObj.RoleId) && columnsMap.ContainsKey(QueryFilter.RoleId.ToString()))
+      {
+        query = query.Where(columnsMap[QueryFilter.RoleId.ToString()]);
+      }
+
+      return query;
     }
   }
 }

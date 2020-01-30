@@ -19,8 +19,10 @@ namespace WebApp1.Mapping
 
       CreateMap<SupportTicketPriority, SupportTicketPriorityResource>();
 
+      CreateMap<SupportTicketResponse, SupportTicketResponseResource>();
+
       // Map API Resources to Domain Models
-      CreateMap<SupportTicketResource, SupportTicket>()
+      CreateMap<CreateSupportTicketResource, SupportTicket>()
         .ForMember(st => st.Id, opt => opt.Ignore())
         .ForMember(st => st.UserId, opt => opt.Ignore());
 
@@ -31,7 +33,12 @@ namespace WebApp1.Mapping
         .ForMember(sts => sts.Id, opt => opt.Ignore()); ;
 
       CreateMap<CreateSupportTicketPriorityResource, SupportTicketPriority>()
-        .ForMember(sts => sts.Id, opt => opt.Ignore()); ;
+        .ForMember(sts => sts.Id, opt => opt.Ignore());
+
+      CreateMap<CreateSupportTicketResponseResource, SupportTicketResponse>()
+        .ForMember(sts => sts.Id, opt => opt.Ignore());
+
+      CreateMap<SupportTicketQueryResource, SupportTicketQuery>();
 
       CreateMap(typeof(QueryResult<>), typeof(QueryResultResource<>));
     }

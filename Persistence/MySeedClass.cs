@@ -83,7 +83,8 @@ namespace WebApp1.Persistence
         var result = userManager.CreateAsync(user, "123a123a").Result;
         if (result.Succeeded)
         {
-          userManager.AddToRoleAsync(user, "admin").Wait();
+          userManager.AddToRoleAsync(user, Roles.Admin.ToString()).Wait();
+          userManager.AddToRoleAsync(user, Roles.User.ToString()).Wait();
         }
       }
     }

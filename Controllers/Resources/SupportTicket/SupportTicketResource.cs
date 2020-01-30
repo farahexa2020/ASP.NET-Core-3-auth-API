@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using WebApp1.Core.Models;
+using WebApp1.Core.Models.Support;
 
 namespace WebApp1.Controllers.Resources.SupportTicket
 {
@@ -6,15 +10,22 @@ namespace WebApp1.Controllers.Resources.SupportTicket
   {
     public string Id { get; set; }
 
-    [Required]
     public string Issue { get; set; }
 
-    public string UserId { get; set; }
+    public UserResource User { get; set; }
 
-    [Required]
-    public string TypeId { get; set; }
+    public UserResource Assignee { get; set; }
 
-    [Required]
-    public string StatusId { get; set; }
+    public SupportTicketTopicResource Topic { get; set; }
+
+    public SupportTicketStatusResource Status { get; set; }
+
+    public SupportTicketPriorityResource Priority { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+
+    public string CreatedBy { get; set; }
   }
 }

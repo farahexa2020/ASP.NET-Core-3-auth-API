@@ -21,7 +21,6 @@ namespace WebApp1.Core.Models.Support
 
     public ApplicationUser User { get; set; }
 
-    [Required]
     public string AssigneeId { get; set; }
 
     public ApplicationUser Assignee { get; set; }
@@ -36,16 +35,17 @@ namespace WebApp1.Core.Models.Support
 
     public SupportTicketStatus Status { get; set; }
 
-    public ICollection<SupportTicketResponse> Responses { get; set; }
+    [Required]
+    public string PriorityId { get; set; }
 
-    public ICollection<SupportTicketMessage> Messages { get; set; }
+    public SupportTicketPriority Priority { get; set; }
+
+    public ICollection<SupportTicketResponse> Responses { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     public string CreatedBy { get; set; }
-
-    public string UpdatedBy { get; set; }
   }
 }
