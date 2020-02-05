@@ -5,7 +5,7 @@ namespace WebApp1.Core
 {
   public interface IUserRepository
   {
-    Task<QueryResult<ApplicationUser>> GetUsers(UserQuery queryObj);
-    Task<ApplicationUser> GetUserById(string id);
+    Task<QueryResult<ApplicationUser>> GetUsersAsync(UserQuery queryObj);
+    Task<ApplicationUser> FindUserByIdAsync(string id);
   }
 }

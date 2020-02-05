@@ -7,7 +7,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
@@ -40,10 +40,7 @@ namespace WebApp1.Controllers.Support
 
       var result = this.mapper.Map<QueryResult<SupportTicketPriority>, QueryResultResource<SupportTicketPriorityResource>>(supportTicketPriority);
 
-      return new OkObjectResult(new OkResource(
-          "All priorities topics",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpGet("{id}")]
@@ -53,17 +50,13 @@ namespace WebApp1.Controllers.Support
 
       if (ticketPriority == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket topic not found"
-        ));
+        ModelState.AddModelError("", "Ticket topic not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       var result = this.mapper.Map<SupportTicketPriority, SupportTicketPriorityResource>(ticketPriority);
 
-      return new OkObjectResult(new OkResource(
-          $"Ticket priority with Id ({id})",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpPost]
@@ -73,9 +66,8 @@ namespace WebApp1.Controllers.Support
       {
         if (this.ticketPriorityRepository.IsPriorityExist(createSupportTicketPriorityReource.Name))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket priority with name ({createSupportTicketPriorityReource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket priority with name ({createSupportTicketPriorityReource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         var supportTicketTopic = this.mapper.Map<CreateSupportTicketPriorityResource, SupportTicketPriority>(createSupportTicketPriorityReource);
@@ -89,18 +81,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            $"New ticket priority has created with name ({supportTicketTopic.Name})"
-        ));
+        return new OkObjectResult(new { message = $"New ticket priority has created with name ({supportTicketTopic.Name})" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}")]
@@ -112,18 +96,16 @@ namespace WebApp1.Controllers.Support
 
         if (ticketTopic == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-              "Ticket priority not found"
-          ));
+          ModelState.AddModelError("", "Ticket priority not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         if (this.ticketPriorityRepository.IsPriorityUpdatedNameExist(
             createSupportTicketPriorityResource.Name,
             id))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket priority with name ({createSupportTicketPriorityResource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket priority with name ({createSupportTicketPriorityResource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketPriorityResource, SupportTicketPriority>(createSupportTicketPriorityResource, ticketTopic);
@@ -135,18 +117,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            "Ticket priority has updated"
-        ));
+        return new OkObjectResult(new { message = "Ticket priority has updated" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpDelete("{id}")]
@@ -156,18 +130,15 @@ namespace WebApp1.Controllers.Support
 
       if (ticketTopic == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket priority not found"
-        ));
+        ModelState.AddModelError("", "Ticket priority not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       this.ticketPriorityRepository.DeleteTicketPriority(ticketTopic);
 
       await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult(new OkResource(
-          "Ticket topic has deleted"
-      ));
+      return new OkObjectResult(new { message = "Ticket topic has deleted" });
     }
   }
 }

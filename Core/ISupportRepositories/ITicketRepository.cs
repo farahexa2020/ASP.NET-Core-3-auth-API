@@ -7,11 +7,11 @@ namespace WebApp1.Core.ISupportRepositories
 {
   public interface ITicketRepository
   {
-    Task<QueryResult<SupportTicket>> GetAllTickets(SupportTicketQuery supportTicketQuery);
+    Task<QueryResult<SupportTicket>> GetAllTicketsAsync(SupportTicketQuery supportTicketQuery);
 
     Task<SupportTicket> FindTicketByIdAsync(string id);
 
-    Task<QueryResult<SupportTicket>> GetAllUserTickets(string userId);
+    Task<QueryResult<SupportTicket>> GetAllUserTicketsAsync(string userId);
 
     void CreateTicket(SupportTicket supportTicket);
 
@@ -20,5 +20,7 @@ namespace WebApp1.Core.ISupportRepositories
     Task<SupportTicketResponse> FindTicketResponseByIdAsync(string id);
 
     void PostTicketResponse(string ticketId, SupportTicketResponse supportTicketResponse);
+
+    void UpdateTicket(SupportTicket supportTicket);
   }
 }

@@ -115,6 +115,9 @@ namespace WebApp1
 
         options.AddPolicy("UserPolicy",
                           policy => policy.AddRequirements(new ManageUserRequirements()));
+
+        options.AddPolicy("SupportTicketResponsePolicy",
+                          policy => policy.AddRequirements(new SupportTicketResponseRequirements()));
       });
 
       services.AddAutoMapper(typeof(Startup));
@@ -139,11 +142,13 @@ namespace WebApp1
 
       services.AddScoped<ITicketTopicRepository, TicketTopicRepository>();
 
-      // services.AddScoped<IValueNotificationRepository, ValueNotificationRepository>();
+      services.AddScoped<INotificationRepository, NotificationRepository>();
 
       services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
 
       services.AddSingleton<IAuthorizationHandler, ManageUserHandler>();
+
+      services.AddSingleton<IAuthorizationHandler, SupportTicketResponseHandler>();
 
       services.AddSingleton<IUserConnectionManager, UserConnectionManager>();
 
@@ -194,13 +199,12 @@ namespace WebApp1
       app.UseAuthentication();
       app.UseAuthorization();
 
-      MySeedClass.Seed(context, roleManager, userManager);
+      ApplicationSeedClass.Seed(context, roleManager, userManager);
 
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
-        endpoints.MapHub<ValuesHub>("/Hubs/Values");
-        endpoints.MapHub<NotificationUserHub>("/Hubs/NotificationUser");
+        endpoints.MapHub<NotificationHub>("/Hubs/NotificationUser");
       });
     }
   }

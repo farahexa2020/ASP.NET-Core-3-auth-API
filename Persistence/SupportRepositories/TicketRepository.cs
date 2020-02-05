@@ -26,7 +26,7 @@ namespace WebApp1.Persistence.SupportRepositories
       StatusId = 3,
       PriorityId = 4,
     }
-    public async Task<QueryResult<SupportTicket>> GetAllTickets(SupportTicketQuery queryObj)
+    public async Task<QueryResult<SupportTicket>> GetAllTicketsAsync(SupportTicketQuery queryObj)
     {
       var query = this.context.SupportTickets
                                   .Include(st => st.User)
@@ -69,7 +69,7 @@ namespace WebApp1.Persistence.SupportRepositories
                                 .FirstOrDefaultAsync();
     }
 
-    public async Task<QueryResult<SupportTicket>> GetAllUserTickets(string userId)
+    public async Task<QueryResult<SupportTicket>> GetAllUserTicketsAsync(string userId)
     {
       var userTickets = this.context.SupportTickets
                                       .Where(st => st.UserId == userId)
@@ -112,12 +112,22 @@ namespace WebApp1.Persistence.SupportRepositories
 
     public async Task<SupportTicketResponse> FindTicketResponseByIdAsync(string id)
     {
-      return await this.context.SupportTicketResponses.Where(str => str.Id == id).FirstOrDefaultAsync();
+      return await this.context.SupportTicketResponses
+                                .Where(str => str.Id == id)
+                                .Include(str => str.User)
+                                .ThenInclude(stru => stru.UserRoles)
+                                .ThenInclude(strur => strur.Role)
+                                .FirstOrDefaultAsync();
     }
 
     public void PostTicketResponse(string ticketId, SupportTicketResponse supportTicketResponse)
     {
       this.context.SupportTicketResponses.Add(supportTicketResponse);
+    }
+
+    public void UpdateTicket(SupportTicket supportTicket)
+    {
+      this.context.SupportTickets.Update(supportTicket);
     }
 
     private IQueryable<SupportTicket> ApplyTicketFiltering(IQueryable<SupportTicket> query, SupportTicketQuery queryObj, Dictionary<string, Expression<Func<SupportTicket, bool>>> columnsMap)

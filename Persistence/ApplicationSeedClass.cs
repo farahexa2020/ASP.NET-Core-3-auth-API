@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WebApp1.Core;
+using WebApp1.Core.Claims;
 using WebApp1.Core.Models;
 
 namespace WebApp1.Persistence
 {
-  public static class MySeedClass
+  public static class ApplicationSeedClass
   {
     public static void Seed(ApplicationDbContext context, RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
     {
@@ -66,9 +68,10 @@ namespace WebApp1.Persistence
 
     public static void SeedUsers(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
     {
-      if (userManager.FindByEmailAsync("admin@admin.com").Result == null)
+      var user = userManager.FindByEmailAsync("admin@admin.com").Result;
+      if (user == null)
       {
-        var user = new ApplicationUser
+        user = new ApplicationUser
         {
           UserName = "admin@admin.com",
           Email = "admin@admin.com",
@@ -83,8 +86,15 @@ namespace WebApp1.Persistence
         var result = userManager.CreateAsync(user, "123a123a").Result;
         if (result.Succeeded)
         {
-          userManager.AddToRoleAsync(user, Roles.Admin.ToString()).Wait();
-          userManager.AddToRoleAsync(user, Roles.User.ToString()).Wait();
+          var roleResult = userManager.AddToRolesAsync(user, new List<string> {
+                              Roles.Admin.ToString(),
+                              Roles.User.ToString()
+                            }).Result;
+
+          if (roleResult.Succeeded)
+          {
+            var claimResult = userManager.AddClaimAsync(user, new Claim(ClaimTypes.Role, AdminClaimValues.SuperAdmin.ToString())).Result;
+          }
         }
       }
     }

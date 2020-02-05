@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApp1.Controllers.Resources.Bank;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 using System.Security.Claims;
@@ -40,10 +40,7 @@ namespace WebApp1.Controllers
       var queryResult = await this.bankRepository.GetActiveBanksAsync();
       var queryResultResource = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
 
-      return new OkObjectResult(new OkResource(
-        "All Active Banks",
-        queryResultResource
-      ));
+      return new OkObjectResult(queryResultResource);
     }
 
     [HttpGet("all")]
@@ -56,10 +53,7 @@ namespace WebApp1.Controllers
       var queryResult = await this.bankRepository.GetBanksAsync(bankQuery, language);
       var queryResultResource = this.mapper.Map<QueryResult<Bank>, QueryResultResource<BankResource>>(queryResult, opt => opt.Items["language"] = language);
 
-      return new OkObjectResult(new OkResource(
-        "All Banks",
-        queryResultResource
-      ));
+      return new OkObjectResult(queryResultResource);
     }
 
     [HttpGet("{id}")]
@@ -68,37 +62,43 @@ namespace WebApp1.Controllers
     {
       var language = Request.Headers["Accept-Language"].ToString();
 
-      var bank = await this.bankRepository.GetBankByIdAsync(id);
+      var bank = await this.bankRepository.FindBankByIdAsync(id);
       if (bank == null)
-        return new NotFoundObjectResult(new NotFoundResource($"Bank with Id ({id}) not found"));
+      {
+        ModelState.AddModelError("", $"Bank with Id ({id}) not found");
+        return new NotFoundObjectResult(new NotFoundResource());
+      }
 
       var result = this.mapper.Map<Bank, BankResource>(bank, opt => opt.Items["language"] = language);
 
-      return new OkObjectResult(new OkResource(
-        $"Bank ({id})",
-        result
-      ));
+      return new OkObjectResult(result);
     }
 
     [Authorize(Policy = "AdminPolicy")]
     [HttpPost]
     public async Task<ActionResult> CreateBank([FromBody] CreateBankResource resource)
     {
+      var language = Request.Headers["Accept-Language"].ToString();
+
       string userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-      if (!ModelState.IsValid) return BadRequest(ModelState);
+      if (ModelState.IsValid)
+      {
+        var bank = this.mapper.Map<CreateBankResource, Bank>(resource);
+        bank.CreatedAt = DateTime.Now;
+        bank.UpdatedAt = DateTime.Now;
+        bank.UpdatedBy = userId;
 
-      Bank bank = this.mapper.Map<CreateBankResource, Bank>(resource);
-      bank.CreatedAt = DateTime.Now;
-      bank.UpdatedAt = DateTime.Now;
-      bank.UpdatedBy = userId;
+        this.bankRepository.Add(bank);
+        await this.unitOfWork.CompleteAsync();
 
-      this.bankRepository.Add(bank);
-      await this.unitOfWork.CompleteAsync();
+        var createdBank = await this.bankRepository.FindBankByIdAsync(bank.Id);
+        var createdBankResource = this.mapper.Map<Bank, BankResource>(createdBank, opt => opt.Items["language"] = language);
 
-      return new OkObjectResult(new CreatedResource(
-        "Bank created"
-      ));
+        return new OkObjectResult(createdBankResource);
+      }
+
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPost("{id}/Translations")]
@@ -116,25 +116,16 @@ namespace WebApp1.Controllers
 
           await this.unitOfWork.CompleteAsync();
 
-          return new OkObjectResult(new OkResource(
-            $"Bank ({id}) updated"
-          ));
+          return new OkObjectResult(new { message = $"Bank ({id}) updated" });
         }
         catch (DbUpdateException e)
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-            $"Language ({language}): Name is already added "
-          ));
+          ModelState.AddModelError("", $"Language ({language}): Name is already added ");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}/Translations")]
@@ -145,22 +136,14 @@ namespace WebApp1.Controllers
         var bankTranslation = this.mapper.Map<BankTranslationResource, BankTranslation>(bankTranslationResource);
 
         var language = Request.Headers["Accept-Language"].ToString();
-        await this.bankRepository.UpdateBankTranslation(id, bankTranslation, language);
+        await this.bankRepository.UpdateBankTranslationAsync(id, bankTranslation, language);
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-          $"Bank ({id}) updated"
-        ));
+        return new OkObjectResult(new { message = $"Bank ({id}) updated" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpDelete("{id}/Translations")]
@@ -168,42 +151,31 @@ namespace WebApp1.Controllers
     {
       if (ModelState.IsValid)
       {
-        await this.bankRepository.DeleteBankTranslation(id, languageId);
+        await this.bankRepository.DeleteBankTranslationAsync(id, languageId);
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-          $"Bank ({id}) updated, ({languageId}) name deleted"
-        ));
+        return new OkObjectResult(new { message = $"Bank ({id}) updated, ({languageId}) name deleted" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [Authorize(Policy = "AdminPolicy")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteBank([FromRoute] string id)
     {
-      var bank = await this.bankRepository.GetBankByIdAsync(id);
+      var bank = await this.bankRepository.FindBankByIdAsync(id);
       if (bank == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-          $"Bank with Id ({id}) Not Found"
-        ));
+        ModelState.AddModelError("", $"Bank with Id ({id}) Not Found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       bank.IsActive = false;
       await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult(new OkResource(
-        $"Bank with Id ({id}) has Disactivated"
-      ));
+      return new OkObjectResult(new { message = $"Bank with Id ({id}) has Disactivated" });
     }
   }
 }

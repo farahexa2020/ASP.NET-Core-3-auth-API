@@ -7,13 +7,15 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
 using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.Hubs;
 
 namespace WebApp1.Controllers
 {
@@ -23,27 +25,39 @@ namespace WebApp1.Controllers
   public class TicketsController : Controller
   {
     private readonly IUnitOfWork unitOfWork;
+    private readonly IUserConnectionManager userConnectionManager;
+    private readonly IHubContext<NotificationHub> notificationHubContext;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly RoleManager<ApplicationRole> roleManager;
     private readonly ITicketTopicRepository ticketTopicRepository;
     private readonly ITicketStatusRepository ticketStatusRepository;
     private readonly ITicketPriorityRepository ticketPriorityRepository;
-    private readonly ITicketRepository TicketRepository;
+    private readonly ITicketRepository ticketRepository;
+    private readonly INotificationRepository notificationRepository;
     private readonly IMapper mapper;
-    public TicketsController(UserManager<ApplicationUser> userManager,
+    public TicketsController(IUserConnectionManager userConnectionManager,
+                              IHubContext<NotificationHub> notificationHubContext,
+                              UserManager<ApplicationUser> userManager,
+                              RoleManager<ApplicationRole> roleManager,
                               ITicketTopicRepository ticketTopicRepository,
                               ITicketStatusRepository ticketStatusRepository,
                               ITicketPriorityRepository ticketPriorityRepository,
-                              ITicketRepository TicketRepository,
+                              ITicketRepository ticketRepository,
+                              INotificationRepository notificationRepository,
                               IUnitOfWork unitOfWork,
                               IMapper mapper)
     {
       this.mapper = mapper;
       this.unitOfWork = unitOfWork;
+      this.userConnectionManager = userConnectionManager;
+      this.notificationHubContext = notificationHubContext;
       this.userManager = userManager;
+      this.roleManager = roleManager;
       this.ticketTopicRepository = ticketTopicRepository;
       this.ticketStatusRepository = ticketStatusRepository;
       this.ticketPriorityRepository = ticketPriorityRepository;
-      this.TicketRepository = TicketRepository;
+      this.ticketRepository = ticketRepository;
+      this.notificationRepository = notificationRepository;
     }
 
     [Authorize(Policy = "AdminPolicy")]
@@ -51,14 +65,11 @@ namespace WebApp1.Controllers
     public async Task<IActionResult> GetAllTickets([FromQuery] SupportTicketQueryResource supportTicketQueryResource)
     {
       var ticketQuery = this.mapper.Map<SupportTicketQueryResource, SupportTicketQuery>(supportTicketQueryResource);
-      var ticket = await this.TicketRepository.GetAllTickets(ticketQuery);
+      var ticket = await this.ticketRepository.GetAllTicketsAsync(ticketQuery);
 
       var result = this.mapper.Map<QueryResult<SupportTicket>, QueryResultResource<SupportTicketResource>>(ticket);
 
-      return new OkObjectResult(new OkResource(
-          "All Tickets",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpGet("{id}")]
@@ -67,7 +78,7 @@ namespace WebApp1.Controllers
       var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
       var user = await userManager.FindByIdAsync(loggedInUserId);
 
-      var ticket = await this.TicketRepository.FindTicketByIdAsync(id);
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(id);
       if (ticket != null)
       {
         if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
@@ -76,18 +87,14 @@ namespace WebApp1.Controllers
         {
           var result = this.mapper.Map<SupportTicket, SupportTicketResource>(ticket);
 
-          return new OkObjectResult(new OkResource(
-            $"Ticket ({id})",
-            result
-          ));
+          return new OkObjectResult(result);
         }
 
         return new ForbidResult();
       }
 
-      return new NotFoundObjectResult(new NotFoundResource(
-        $"Ticket with Id ({id}) not found!"
-      ));
+      ModelState.AddModelError("", $"Ticket with Id ({id}) not found!");
+      return new NotFoundObjectResult(new NotFoundResource(ModelState));
     }
 
     [HttpGet("user/{userId}")]
@@ -99,20 +106,17 @@ namespace WebApp1.Controllers
       if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
           loggedInUserId == userId)
       {
-        var userTickets = await this.TicketRepository.GetAllUserTickets(userId);
+        var userTickets = await this.ticketRepository.GetAllUserTicketsAsync(userId);
 
         var result = this.mapper.Map<QueryResult<SupportTicket>, QueryResultResource<SupportTicketResource>>(userTickets);
 
-        return new OkObjectResult(new OkResource(
-          $"User ({userId}) Tickets",
-          result
-        ));
+        return new OkObjectResult(result);
       }
 
       return new ForbidResult();
     }
 
-    [Authorize(Roles = "ADmin, User")]
+    [Authorize(Roles = "Admin, User")]
     [HttpPost]
     public async Task<IActionResult> CreateTicket([FromBody] CreateSupportTicketResource createSupportTicketResource)
     {
@@ -120,23 +124,20 @@ namespace WebApp1.Controllers
       {
         if (this.ticketTopicRepository.FindTicketTopicByIdAsync(createSupportTicketResource.TopicId) == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            $"Topic with Id ({createSupportTicketResource.TopicId}) not found"
-          ));
+          ModelState.AddModelError("", $"Topic with Id ({createSupportTicketResource.TopicId}) not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         if (this.ticketStatusRepository.FindTicketStatusByIdAsync(createSupportTicketResource.StatusId) == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            $"Status with Id ({createSupportTicketResource.StatusId}) not found"
-          ));
+          ModelState.AddModelError("", $"Status with Id ({createSupportTicketResource.StatusId}) not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         if (this.ticketPriorityRepository.FindTicketPriorityByIdAsync(createSupportTicketResource.PriorityId) == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            $"Proirity with Id ({createSupportTicketResource.PriorityId}) not found"
-          ));
+          ModelState.AddModelError("", $"Proirity with Id ({createSupportTicketResource.PriorityId}) not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         var Ticket = this.mapper.Map<CreateSupportTicketResource, SupportTicket>(createSupportTicketResource);
@@ -147,22 +148,14 @@ namespace WebApp1.Controllers
         Ticket.UpdatedAt = DateTime.Now;
         Ticket.CreatedBy = loggedInUserId;
 
-        this.TicketRepository.CreateTicket(Ticket);
+        this.ticketRepository.CreateTicket(Ticket);
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-          "New ticket has created"
-        ));
+        return new OkObjectResult(new { message = "New ticket has created" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpGet("{id}/Response")]
@@ -171,70 +164,146 @@ namespace WebApp1.Controllers
       var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
       var user = await userManager.FindByIdAsync(loggedInUserId);
 
-      var ticket = await this.TicketRepository.FindTicketByIdAsync(id);
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(id);
 
       if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
             loggedInUserId == ticket.UserId ||
             loggedInUserId == ticket.AssigneeId)
       {
-        var responsesQuery = await this.TicketRepository.GetAllTicketResponsesAsync(id);
+        var responsesQuery = await this.ticketRepository.GetAllTicketResponsesAsync(id);
 
         var result = this.mapper.Map<QueryResult<SupportTicketResponse>, QueryResultResource<SupportTicketResponseResource>>(responsesQuery);
 
-        return new OkObjectResult(new OkResource(
-          $"Ticket ({id}) responses",
-          result
-        ));
+        return new OkObjectResult(result);
       }
 
       return new ForbidResult();
     }
-
-    [HttpPost("{id}/Response")]
-    public async Task<IActionResult> PostResponse([FromRoute] string id, [FromBody] CreateSupportTicketResponseResource CreateSupportTicketResponseResource)
+    [Authorize(Policy = "SupportTicketResponsePolicy")]
+    [HttpPost("{ticketId}/Response")]
+    public async Task<IActionResult> PostResponse([FromRoute] string ticketId, [FromBody] CreateSupportTicketResponseResource CreateSupportTicketResponseResource)
     {
       if (ModelState.IsValid)
       {
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await userManager.FindByIdAsync(loggedInUserId);
 
-        var ticket = await this.TicketRepository.FindTicketByIdAsync(id);
+        var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
 
-        if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
-              loggedInUserId == ticket.UserId ||
-              loggedInUserId == ticket.AssigneeId)
+        var response = this.mapper.Map<CreateSupportTicketResponseResource, SupportTicketResponse>(CreateSupportTicketResponseResource);
+
+        response.TicketId = ticketId;
+
+        response.UserId = loggedInUserId;
+        response.PostedAt = DateTime.Now;
+
+        this.ticketRepository.PostTicketResponse(ticketId, response);
+
+        await this.unitOfWork.CompleteAsync();
+
+        var ticketResponse = await this.ticketRepository.FindTicketResponseByIdAsync(response.Id);
+
+        var result = this.mapper.Map<SupportTicketResponse, SupportTicketResponseResource>(ticketResponse);
+
+        if (loggedInUserId != ticket.UserId)
         {
-          var response = this.mapper.Map<CreateSupportTicketResponseResource, SupportTicketResponse>(CreateSupportTicketResponseResource);
-
-          response.TicketId = id;
-
-          response.UserId = loggedInUserId;
-          response.PostedAt = DateTime.Now;
-
-          this.TicketRepository.PostTicketResponse(id, response);
+          var notification = new Notification()
+          {
+            SenderId = loggedInUserId,
+            RecieverId = ticket.UserId,
+            message = $"User with id ({loggedInUserId}) added a response to ticket ({ticket.Id})",
+            seen = false
+          };
+          this.notificationRepository.AddNotification(notification);
 
           await this.unitOfWork.CompleteAsync();
 
-          var ticketResponse = await this.TicketRepository.FindTicketResponseByIdAsync(response.Id);
-
-          var result = this.mapper.Map<SupportTicketResponse, SupportTicketResponseResource>(ticketResponse);
-
-          return new OkObjectResult(new OkResource(
-            "Response posted",
-            result
-          ));
+          try
+          {
+            await this.notify("sendToUser", notification.message, ticket.UserId);
+          }
+          catch (KeyNotFoundException e)
+          {
+          }
         }
 
-        return new ForbidResult();
+        return new OkObjectResult(result);
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
+    }
+
+    [HttpPost("{ticketId}/Assign")]
+    public async Task<IActionResult> AssignTicket([FromRoute] string ticketId, [FromQuery] string supportId)
+    {
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
+      if (ticket == null)
+      {
+        ModelState.AddModelError("", "Ticket Not Found!");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
+      }
+
+      var user = await this.userManager.FindByIdAsync(supportId);
+      if (user == null)
+      {
+        ModelState.AddModelError("", "User Not Found!");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
+      }
+
+      if (!await this.userManager.IsInRoleAsync(user, Roles.Support.ToString()))
+      {
+        ModelState.AddModelError("", $"User ({user.Id}) is Not a member of role Support!");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
+      }
+
+      if (!string.IsNullOrWhiteSpace(ticket.AssigneeId))
+      {
+        ModelState.AddModelError("", $"Ticket ({ticket.Id}) is already assigned!");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
+      }
+
+      ticket.AssigneeId = supportId;
+      this.ticketRepository.UpdateTicket(ticket);
+
+      await this.unitOfWork.CompleteAsync();
+
+      return new OkObjectResult(new { message = $"User ({supportId}) has assigned to ticket ({ticketId})" });
+    }
+
+    [HttpDelete("{ticketId}/Assign")]
+    public async Task<IActionResult> UnassignTicket([FromRoute] string ticketId)
+    {
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
+      if (ticket == null)
+      {
+        ModelState.AddModelError("", "Ticket Not Found!");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
+      }
+
+      if (ticket.AssigneeId == null)
+      {
+        ModelState.AddModelError("", "Ticket already has no assignee!");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
+      }
+
+      ticket.AssigneeId = null;
+      this.ticketRepository.UpdateTicket(ticket);
+
+      await this.unitOfWork.CompleteAsync();
+
+      return new OkObjectResult(new { message = $"Ticket ({ticketId}) has had assignee removed" });
+    }
+
+    private async Task notify(string method, object message, string userId)
+    {
+      var connections = this.userConnectionManager.GetUserConnections(userId);
+      if (connections != null && connections.Count > 0)
+      {
+        foreach (var connectionId in connections)
+        {
+          await this.notificationHubContext.Clients.Client(connectionId).SendAsync(method, message);//send to user 
+        }
+      }
     }
   }
 }

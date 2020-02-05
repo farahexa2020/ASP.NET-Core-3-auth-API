@@ -1,29 +1,52 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
+using WebApp1.Core;
 using WebApp1.Core.Models;
 
 namespace WebApp1.Controllers
 {
-  [Authorize(Policy = "UserPolicy")]
+  [Authorize]
   [Route("api/[controller]")]
   [ApiController]
   public class ProfileController : Controller
   {
     public IMapper mapper { get; set; }
     private readonly UserManager<ApplicationUser> userManager;
-    public ProfileController(IMapper mapper, UserManager<ApplicationUser> userManager)
+    private readonly IUserRepository userRepository;
+    public ProfileController(IMapper mapper,
+                              UserManager<ApplicationUser> userManager,
+                              IUserRepository userRepository)
     {
+      this.userRepository = userRepository;
       this.userManager = userManager;
       this.mapper = mapper;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetUser()
+    {
+      var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+      var user = await this.userRepository.FindUserByIdAsync(loggedInUserId);
+
+      if (user != null)
+      {
+        var result = this.mapper.Map<ApplicationUser, UserResource>(user);
+        return new OkObjectResult(result);
+      }
+
+      return new UnauthorizedResult();
+    }
+
+    [Authorize(Policy = "UserPolicy")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProfileAsync([FromRoute] string id, [FromBody] UpdateUserResource updateUserResource)
     {
@@ -32,9 +55,8 @@ namespace WebApp1.Controllers
         var user = await userManager.FindByIdAsync(id);
         if (user == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            "User Not Found"
-          ));
+          ModelState.AddModelError("", "User Not Found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         this.mapper.Map<UpdateUserResource, ApplicationUser>(updateUserResource, user);
@@ -45,9 +67,10 @@ namespace WebApp1.Controllers
 
         if (result.Succeeded)
         {
-          return new OkObjectResult(new OkResource(
-            "User Updated"
-          ));
+          var updatedUser = await userRepository.FindUserByIdAsync(id);
+          var updatedUserResource = this.mapper.Map<ApplicationUser, UserResource>(updatedUser);
+
+          return new OkObjectResult(updatedUserResource);
         }
 
         foreach (IdentityError error in result.Errors)
@@ -56,15 +79,10 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
+    [Authorize(Policy = "UserPolicy")]
     [HttpPost("{id}/AddPhoneNumber")]
     // [ValidateAntiForgeryToken]
     public async Task<ActionResult> AddPhoneNumber([FromRoute] string id, [FromQuery] string phoneNumber)
@@ -84,9 +102,7 @@ namespace WebApp1.Controllers
           //   Destination = PhoneNumber,
           //   Body = "Your security code is: " + code
           // };
-          return new OkObjectResult(new OkResource(
-            "You security code is: " + code
-          ));
+          return new OkObjectResult(new { message = $"You security code is: ({code})" });
         }
 
         foreach (IdentityError error in result.Errors)
@@ -95,17 +111,10 @@ namespace WebApp1.Controllers
         }
       }
 
-      // If we got this far, something failed, redisplay form
-      ModelState.AddModelError("", "Failed to send confirmation code");
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
+    [Authorize(Policy = "UserPolicy")]
     [HttpPost("{id}/VerifyPhoneNumber")]
     public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string id, [FromBody] PhoneNumberConfirmationResource verifyPhoneNumberResource)
     {
@@ -124,9 +133,7 @@ namespace WebApp1.Controllers
           var updateResult = await this.userManager.UpdateAsync(user);
           if (updateResult.Succeeded)
           {
-            return new OkObjectResult(new OkResource(
-            "Congratulation , the phone number is confirmed successfully"
-          ));
+            return new OkObjectResult(new { message = "Phone number is confirmed successfully" });
           }
         }
 
@@ -138,13 +145,7 @@ namespace WebApp1.Controllers
 
       // If we got this far, something failed, redisplay form
       ModelState.AddModelError("", "Failed to verify phone");
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                        (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
   }
 }

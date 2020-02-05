@@ -24,8 +24,7 @@ namespace WebApp1.Persistence
     public DbSet<SupportTicketStatus> SupportTicketStatuses { get; set; }
     public DbSet<SupportTicketPriority> SupportTicketPriorities { get; set; }
     public DbSet<SupportTicketResponse> SupportTicketResponses { get; set; }
-    // public DbSet<Value> Values { get; set; }
-    // public DbSet<ValueNotification> ValueNotifications { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

@@ -7,7 +7,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
@@ -42,10 +42,7 @@ namespace WebApp1.Controllers.Support
 
       var result = this.mapper.Map<QueryResult<SupportTicketTopic>, QueryResultResource<SupportTicketTopicResource>>(supportTicketTopics);
 
-      return new OkObjectResult(new OkResource(
-          $"All ticket topics",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpGet("{id}")]
@@ -55,17 +52,13 @@ namespace WebApp1.Controllers.Support
 
       if (ticketTopic == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket topic not found"
-        ));
+        ModelState.AddModelError("", "Ticket topic not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       var result = this.mapper.Map<SupportTicketTopic, SupportTicketTopicResource>(ticketTopic);
 
-      return new OkObjectResult(new OkResource(
-          $"Ticket topic with Id ({id})",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpPost]
@@ -75,9 +68,8 @@ namespace WebApp1.Controllers.Support
       {
         if (this.ticketTopicRepository.IsTopicExist(createSupportTicketTopicReource.Name))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket topic with name ({createSupportTicketTopicReource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket topic with name ({createSupportTicketTopicReource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         var supportTicketTopic = this.mapper.Map<CreateSupportTicketTopicResource, SupportTicketTopic>(createSupportTicketTopicReource);
@@ -91,18 +83,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            $"New ticket topic has created with name ({supportTicketTopic.Name})"
-        ));
+        return new OkObjectResult(new { message = $"New ticket topic has created with name ({supportTicketTopic.Name})" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}")]
@@ -114,18 +98,16 @@ namespace WebApp1.Controllers.Support
 
         if (ticketTopic == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-              "Ticket topic not found"
-          ));
+          ModelState.AddModelError("", "Ticket topic not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         if (this.ticketTopicRepository.IsTopicUpdatedNameExist(
             createSupportTicketTopicResource.Name,
             id))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket topic with name ({createSupportTicketTopicResource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket topic with name ({createSupportTicketTopicResource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketTopicResource, SupportTicketTopic>(createSupportTicketTopicResource, ticketTopic);
@@ -137,18 +119,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            "Ticket topic has updated"
-        ));
+        return new OkObjectResult(new { message = "Ticket topic has updated" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpDelete("{id}")]
@@ -158,18 +132,15 @@ namespace WebApp1.Controllers.Support
 
       if (ticketTopic == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket topic not found"
-        ));
+        ModelState.AddModelError("", "Ticket topic not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       this.ticketTopicRepository.DeleteTicketTopic(ticketTopic);
 
       await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult(new OkResource(
-          "Ticket topic has deleted"
-      ));
+      return new OkObjectResult(new { message = "Ticket topic has deleted" });
     }
   }
 }

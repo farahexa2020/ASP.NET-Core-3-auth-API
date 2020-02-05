@@ -1,7 +1,11 @@
-namespace WebApp1.Controllers.Resources
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace WebApp1.Core.Models
 {
-  public class ValueNotificationResource
+  [Table("Notifications")]
+  public class Notification
   {
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public string Id { get; set; }
 
     public string SenderId { get; set; }

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 
@@ -44,27 +44,27 @@ namespace WebApp1.Controllers
     {
       var userQuery = mapper.Map<UserQueryResource, UserQuery>(userQueryResource);
 
-      var queryResult = await this.userRepository.GetUsers(userQuery);
+      var queryResult = await this.userRepository.GetUsersAsync(userQuery);
 
       var response = mapper.Map<QueryResult<ApplicationUser>, QueryResultResource<UserResource>>(queryResult);
 
-      return new OkObjectResult(new OkResource(
-        "All Users",
-        response
-      ));
+      return new OkObjectResult(response);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserByIdAsync(string id)
     {
-      var user = await this.userRepository.GetUserById(id);
+      var user = await this.userRepository.FindUserByIdAsync(id);
+
+      if (user == null)
+      {
+        ModelState.AddModelError("", "User not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
+      }
 
       var response = this.mapper.Map<ApplicationUser, UserResource>(user);
 
-      return new OkObjectResult(new OkResource(
-        $"User with Id ({id})",
-        response
-      ));
+      return new OkObjectResult(response);
     }
 
     [HttpPost]
@@ -77,9 +77,8 @@ namespace WebApp1.Controllers
         var user = await this.userManager.FindByEmailAsync(registerUserResource.Email);
         if (user != null)
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-            "User is already exist"
-          ));
+          ModelState.AddModelError("", "User is already exist");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         user = this.mapper.Map<RegisterUserResource, ApplicationUser>(registerUserResource);
@@ -87,9 +86,8 @@ namespace WebApp1.Controllers
         var role = await roleManager.FindByNameAsync(Roles.User.ToString());
         if (role == null)
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-            "Role not found"
-          ));
+          ModelState.AddModelError("", "Role not found");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         user.UserRoles.Add(new ApplicationUserRole() { RoleId = role.Id });
@@ -102,26 +100,18 @@ namespace WebApp1.Controllers
         var result = await this.userManager.CreateAsync(user, registerUserResource.Password);
         if (result.Succeeded)
         {
-          user = await this.userRepository.GetUserById(user.Id);
-          var userRes = this.mapper.Map<ApplicationUser, UserResource>(user);
-          return new OkObjectResult(new CreatedResource(
-            "User Created",
-            userRes));
+          user = await this.userRepository.FindUserByIdAsync(user.Id);
+          var userResource = this.mapper.Map<ApplicationUser, UserResource>(user);
+          return new OkObjectResult(userResource);
         }
 
         foreach (IdentityError error in result.Errors)
         {
-          ModelState.AddModelError(error.Code, error.Description);
+          ModelState.AddModelError("", error.Description);
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}")]
@@ -134,9 +124,8 @@ namespace WebApp1.Controllers
         var user = await this.userManager.FindByIdAsync(id);
         if (user == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            "User not found"
-          ));
+          ModelState.AddModelError("", "User not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         this.mapper.Map<UpdateUserResource, ApplicationUser>(updateUserResource, user);
@@ -147,13 +136,10 @@ namespace WebApp1.Controllers
 
         if (result.Succeeded)
         {
-          user = await this.userRepository.GetUserById(user.Id);
+          user = await this.userRepository.FindUserByIdAsync(user.Id);
           var userResource = this.mapper.Map<ApplicationUser, UserResource>(user);
 
-          return new OkObjectResult(new OkResource(
-            "User Updated",
-            userResource
-          ));
+          return new OkObjectResult(userResource);
         }
 
         foreach (IdentityError error in result.Errors)
@@ -162,13 +148,7 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpDelete("{id}")]
@@ -179,9 +159,8 @@ namespace WebApp1.Controllers
         var user = await this.userManager.FindByIdAsync(id);
         if (user == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            "User not found"
-          ));
+          ModelState.AddModelError("", "User not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         user.IsActive = false;
@@ -191,13 +170,10 @@ namespace WebApp1.Controllers
 
         if (result.Succeeded)
         {
-          user = await this.userRepository.GetUserById(user.Id);
+          user = await this.userRepository.FindUserByIdAsync(user.Id);
           var userResource = this.mapper.Map<ApplicationUser, UserResource>(user);
 
-          return new OkObjectResult(new OkResource(
-            "User has disactivated",
-            userResource
-          ));
+          return new OkObjectResult(userResource);
         }
 
         foreach (IdentityError error in result.Errors)
@@ -206,13 +182,7 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}/Activate")]
@@ -223,9 +193,8 @@ namespace WebApp1.Controllers
         var user = await this.userManager.FindByIdAsync(id);
         if (user == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-            "User not found"
-          ));
+          ModelState.AddModelError("", "User not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         user.IsActive = true;
@@ -235,13 +204,10 @@ namespace WebApp1.Controllers
 
         if (result.Succeeded)
         {
-          user = await this.userRepository.GetUserById(user.Id);
+          user = await this.userRepository.FindUserByIdAsync(user.Id);
           var userResource = this.mapper.Map<ApplicationUser, UserResource>(user);
 
-          return new OkObjectResult(new OkResource(
-            "User has activated",
-            userResource
-          ));
+          return new OkObjectResult(userResource);
         }
 
         foreach (IdentityError error in result.Errors)
@@ -250,40 +216,31 @@ namespace WebApp1.Controllers
         }
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [Authorize(Policy = "EditRolePolicy")]
     [HttpPost("AssignRole")]
-    public async Task<IActionResult> AddUserToRoleAsync([FromQuery] string id, [FromQuery] string roleId)
+    public async Task<IActionResult> AddUserToRoleAsync([FromQuery] string userId, [FromQuery] string roleId)
     {
-      var user = await this.userManager.FindByIdAsync(id);
+      var user = await this.userManager.FindByIdAsync(userId);
       if (user == null)
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          "User not found"
-        ));
+        ModelState.AddModelError("", "User not found");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       var role = await roleManager.FindByIdAsync(roleId);
       if (role == null)
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          "Role not found"
-        ));
+        ModelState.AddModelError("", "Role not found");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       if (await userManager.IsInRoleAsync(user, role.Name))
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          $"User is already added to role {role.Name}"
-        ));
+        ModelState.AddModelError("", $"User is already added to role {role.Name}");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       var result = await userManager.AddToRoleAsync(user, role.Name);
@@ -291,9 +248,7 @@ namespace WebApp1.Controllers
       {
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-          $"User ({user.FirstName}) was added to role ({role.Name})"
-        ));
+        return new OkObjectResult(new { message = $"User ({user.FirstName}) was added to role ({role.Name})" });
       }
 
       foreach (IdentityError error in result.Errors)
@@ -301,40 +256,31 @@ namespace WebApp1.Controllers
         ModelState.AddModelError("", error.Description);
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [Authorize(Policy = "EditRolePolicy")]
     [HttpDelete("AssignRole")]
-    public async Task<IActionResult> RemoveUserFromRoleAsync([FromQuery] string id, [FromQuery] string roleId)
+    public async Task<IActionResult> RemoveUserFromRoleAsync([FromQuery] string userId, [FromQuery] string roleId)
     {
-      var user = await this.userManager.FindByIdAsync(id);
+      var user = await this.userManager.FindByIdAsync(userId);
       if (user == null)
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          "User not found"
-        ));
+        ModelState.AddModelError("", "User not found");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       var role = await roleManager.FindByIdAsync(roleId);
       if (role == null)
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          "Role not found"
-        ));
+        ModelState.AddModelError("", "Role not found");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       if (!await userManager.IsInRoleAsync(user, role.Name))
       {
-        return new BadRequestObjectResult(new BadRequestResource(
-          $"User is already not in role {role.Name}"
-        ));
+        ModelState.AddModelError("", $"User is already not in role {role.Name}");
+        return new BadRequestObjectResult(new BadRequestResource(ModelState));
       }
 
       var result = await userManager.RemoveFromRoleAsync(user, role.Name);
@@ -342,9 +288,7 @@ namespace WebApp1.Controllers
       {
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-          $"User ({user.FirstName}) was removed from role ({role.Name})"
-        ));
+        return new OkObjectResult(new { message = $"User ({user.FirstName}) was removed from role ({role.Name})" });
       }
 
       foreach (IdentityError error in result.Errors)
@@ -352,13 +296,7 @@ namespace WebApp1.Controllers
         ModelState.AddModelError("", error.Description);
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
   }
 }

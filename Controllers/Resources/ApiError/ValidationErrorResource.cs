@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace WebApp1.Controllers.Resources.ApiResponse
+namespace WebApp1.Controllers.Resources.ApiError
 {
   public class ValidationErrorResource
   {

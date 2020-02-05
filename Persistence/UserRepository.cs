@@ -30,7 +30,7 @@ namespace WebApp1.Persistence
       RoleId = 5
     }
 
-    public async Task<QueryResult<ApplicationUser>> GetUsers(UserQuery queryObj)
+    public async Task<QueryResult<ApplicationUser>> GetUsersAsync(UserQuery queryObj)
     {
       var result = new QueryResult<ApplicationUser>();
 
@@ -67,7 +67,7 @@ namespace WebApp1.Persistence
       return result;
     }
 
-    public async Task<ApplicationUser> GetUserById(string id)
+    public async Task<ApplicationUser> FindUserByIdAsync(string id)
     {
 
       var user = await this.userManager.Users

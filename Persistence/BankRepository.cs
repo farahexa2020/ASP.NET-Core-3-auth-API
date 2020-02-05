@@ -59,7 +59,7 @@ namespace WebApp1.Persistence
       return result;
     }
 
-    public async Task<Bank> GetBankByIdAsync(string id)
+    public async Task<Bank> FindBankByIdAsync(string id)
     {
       return await this.context.Banks
                     .Include(b => b.Translations)
@@ -91,7 +91,7 @@ namespace WebApp1.Persistence
       this.context.Remove(bank);
     }
 
-    public async Task<IEnumerable<BankTranslation>> GetBankTranslation(string bankId)
+    public async Task<IEnumerable<BankTranslation>> GetBankTranslationsAsync(string bankId)
     {
       return await this.context.BankTranslations.Where(bt => bt.BankId == bankId).ToListAsync();
     }
@@ -106,7 +106,7 @@ namespace WebApp1.Persistence
       this.context.Update(bank);
     }
 
-    public async Task UpdateBankTranslation(string bankId, BankTranslation bankTranslation, string languageId)
+    public async Task UpdateBankTranslationAsync(string bankId, BankTranslation bankTranslation, string languageId)
     {
       var bank = await this.context.Banks.Where(b => b.Id == bankId)
                                          .Include(b => b.Translations)
@@ -124,7 +124,7 @@ namespace WebApp1.Persistence
       this.context.Update(bank);
     }
 
-    public async Task DeleteBankTranslation(string bankId, string languageId)
+    public async Task DeleteBankTranslationAsync(string bankId, string languageId)
     {
       var bank = await this.context.Banks.Where(b => b.Id == bankId)
                                          .Include(b => b.Translations)

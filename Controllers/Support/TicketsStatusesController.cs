@@ -7,7 +7,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApp1.Controllers.Resources;
-using WebApp1.Controllers.Resources.ApiResponse;
+using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
@@ -41,10 +41,7 @@ namespace WebApp1.Controllers.Support
 
       var result = this.mapper.Map<QueryResult<SupportTicketStatus>, QueryResultResource<SupportTicketStatusResource>>(supportTicketStatuses);
 
-      return new OkObjectResult(new OkResource(
-          $"All ticket statuses",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpGet("{id}")]
@@ -54,17 +51,13 @@ namespace WebApp1.Controllers.Support
 
       if (ticketStatus == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket status not found"
-        ));
+        ModelState.AddModelError("", "Ticket status not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       var result = this.mapper.Map<SupportTicketStatus, SupportTicketStatusResource>(ticketStatus);
 
-      return new OkObjectResult(new OkResource(
-          $"Ticket Status with Id ({id})",
-          result
-      ));
+      return new OkObjectResult(result);
     }
 
     [HttpPost]
@@ -74,9 +67,8 @@ namespace WebApp1.Controllers.Support
       {
         if (this.ticketStatusRepository.IsStatusExist(createSupportTicketStatusResource.Name))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket Status with name ({createSupportTicketStatusResource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket Status with name ({createSupportTicketStatusResource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         var supportTicketStatus = this.mapper.Map<CreateSupportTicketStatusResource, SupportTicketStatus>(createSupportTicketStatusResource);
@@ -90,18 +82,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            $"New ticket status has created with name ({supportTicketStatus.Name})"
-        ));
+        return new OkObjectResult(new { message = $"New ticket status has created with name ({supportTicketStatus.Name})" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpPut("{id}")]
@@ -113,18 +97,16 @@ namespace WebApp1.Controllers.Support
 
         if (ticketStatus == null)
         {
-          return new NotFoundObjectResult(new NotFoundResource(
-              "Ticket status not found"
-          ));
+          ModelState.AddModelError("", "Ticket status not found");
+          return new NotFoundObjectResult(new NotFoundResource(ModelState));
         }
 
         if (this.ticketStatusRepository.IsStatusUpdatedNameExist(
             createSupportTicketStatusResource.Name,
             id))
         {
-          return new BadRequestObjectResult(new BadRequestResource(
-              $"Ticket status with name ({createSupportTicketStatusResource.Name}) is already exist!"
-          ));
+          ModelState.AddModelError("", $"Ticket status with name ({createSupportTicketStatusResource.Name}) is already exist!");
+          return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketStatusResource, SupportTicketStatus>(createSupportTicketStatusResource, ticketStatus);
@@ -137,18 +119,10 @@ namespace WebApp1.Controllers.Support
 
         await this.unitOfWork.CompleteAsync();
 
-        return new OkObjectResult(new OkResource(
-            "Ticket Status has updated"
-        ));
+        return new OkObjectResult(new { message = "Ticket Status has updated" });
       }
 
-      return new BadRequestObjectResult(new BadRequestResource(
-        "Invalid request",
-        ModelState.Keys
-        .SelectMany(key => ModelState[key].Errors.Select
-                      (x => new ValidationErrorResource(key, x.ErrorMessage)))
-        .ToList()
-      ));
+      return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
     [HttpDelete("{id}")]
@@ -158,18 +132,15 @@ namespace WebApp1.Controllers.Support
 
       if (ticketStatus == null)
       {
-        return new NotFoundObjectResult(new NotFoundResource(
-            "Ticket status not found"
-        ));
+        ModelState.AddModelError("", "Ticket status not found");
+        return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
       this.ticketStatusRepository.DeleteTicketStatus(ticketStatus);
 
       await this.unitOfWork.CompleteAsync();
 
-      return new OkObjectResult(new OkResource(
-          "Ticket status has deleted"
-      ));
+      return new OkObjectResult(new { message = "Ticket status has deleted" });
     }
   }
 }

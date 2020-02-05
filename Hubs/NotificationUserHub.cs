@@ -5,10 +5,10 @@ using WebApp1.Core;
 
 namespace WebApp1.Hubs
 {
-  public class NotificationUserHub : Hub
+  public class NotificationHub : Hub
   {
     private readonly IUserConnectionManager userConnectionManager;
-    public NotificationUserHub(IUserConnectionManager userConnectionManager)
+    public NotificationHub(IUserConnectionManager userConnectionManager)
     {
       this.userConnectionManager = userConnectionManager;
     }

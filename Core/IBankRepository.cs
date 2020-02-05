@@ -9,7 +9,7 @@ namespace WebApp1.Core
   {
     Task<QueryResult<Bank>> GetBanksAsync(BankQuery queryObj, string languageId);
 
-    Task<Bank> GetBankByIdAsync(string id);
+    Task<Bank> FindBankByIdAsync(string id);
 
     Task<QueryResult<Bank>> GetActiveBanksAsync();
 
@@ -17,12 +17,12 @@ namespace WebApp1.Core
 
     void Remove(Bank bank);
 
-    Task<IEnumerable<BankTranslation>> GetBankTranslation(string bankId);
+    Task<IEnumerable<BankTranslation>> GetBankTranslationsAsync(string bankId);
 
     Task AddBankTranslation(string bankId, BankTranslation bankTranslation);
 
-    Task UpdateBankTranslation(string bankId, BankTranslation bankTranslation, string languageId);
+    Task UpdateBankTranslationAsync(string bankId, BankTranslation bankTranslation, string languageId);
 
-    Task DeleteBankTranslation(string bankId, string languageId);
+    Task DeleteBankTranslationAsync(string bankId, string languageId);
   }
 }
