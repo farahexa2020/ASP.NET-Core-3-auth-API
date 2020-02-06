@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Persistence.SupportRepositories
 {
@@ -15,7 +14,7 @@ namespace WebApp1.Persistence.SupportRepositories
     {
       this.context = context;
     }
-    public async Task<SupportTicketPriority> FindTicketPriorityByIdAsync(string id)
+    public async Task<SupportTicketPriority> FindTicketPriorityByIdAsync(int id)
     {
       return await this.context.SupportTicketPriorities.Where(stp => stp.Id == id).SingleOrDefaultAsync();
     }
@@ -24,7 +23,7 @@ namespace WebApp1.Persistence.SupportRepositories
       return this.context.SupportTicketPriorities.Select(stp => stp.Name).ToList().Contains(priorityName);
     }
 
-    public bool IsPriorityUpdatedNameExist(string priorityName, string updatedPriorityId)
+    public bool IsPriorityUpdatedNameExist(string priorityName, int updatedPriorityId)
     {
       return this.context.SupportTicketPriorities
                             .Where(stp => stp.Id != updatedPriorityId)

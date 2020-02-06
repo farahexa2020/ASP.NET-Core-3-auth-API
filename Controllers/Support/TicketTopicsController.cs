@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -11,8 +8,8 @@ using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Controllers.Support
 {
@@ -45,10 +42,10 @@ namespace WebApp1.Controllers.Support
       return new OkObjectResult(result);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> FindTicketTopicById([FromRoute] string id)
+    [HttpGet("{ticketTopicId}")]
+    public async Task<IActionResult> FindTicketTopicById([FromRoute] int ticketTopicId)
     {
-      var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(id);
+      var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(ticketTopicId);
 
       if (ticketTopic == null)
       {
@@ -73,11 +70,8 @@ namespace WebApp1.Controllers.Support
         }
 
         var supportTicketTopic = this.mapper.Map<CreateSupportTicketTopicResource, SupportTicketTopic>(createSupportTicketTopicReource);
-        supportTicketTopic.CreatedAt = DateTime.Now;
-        supportTicketTopic.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        supportTicketTopic.CreatedBy = loggedInUserId;
 
         this.ticketTopicRepository.CreateTicketTopic(supportTicketTopic);
 
@@ -89,12 +83,12 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTicketTopic([FromRoute] string id, [FromBody] CreateSupportTicketTopicResource createSupportTicketTopicResource)
+    [HttpPut("{ticketTopicId}")]
+    public async Task<IActionResult> UpdateTicketTopic([FromRoute] int ticketTopicId, [FromBody] CreateSupportTicketTopicResource createSupportTicketTopicResource)
     {
       if (ModelState.IsValid)
       {
-        var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(id);
+        var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(ticketTopicId);
 
         if (ticketTopic == null)
         {
@@ -104,14 +98,13 @@ namespace WebApp1.Controllers.Support
 
         if (this.ticketTopicRepository.IsTopicUpdatedNameExist(
             createSupportTicketTopicResource.Name,
-            id))
+            ticketTopicId))
         {
           ModelState.AddModelError("", $"Ticket topic with name ({createSupportTicketTopicResource.Name}) is already exist!");
           return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketTopicResource, SupportTicketTopic>(createSupportTicketTopicResource, ticketTopic);
-        ticketTopic.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -125,10 +118,10 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTicketTopic([FromRoute] string id)
+    [HttpDelete("{ticketTopicId}")]
+    public async Task<IActionResult> DeleteTicketTopic([FromRoute] int ticketTopicId)
     {
-      var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(id);
+      var ticketTopic = await this.ticketTopicRepository.FindTicketTopicByIdAsync(ticketTopicId);
 
       if (ticketTopic == null)
       {

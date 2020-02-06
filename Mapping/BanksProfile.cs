@@ -3,6 +3,7 @@ using AutoMapper;
 using WebApp1.Controllers.Resources;
 using WebApp1.Controllers.Resources.Bank;
 using WebApp1.Core.Models;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Mapping
 {

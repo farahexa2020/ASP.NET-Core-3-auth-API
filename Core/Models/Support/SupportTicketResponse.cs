@@ -8,7 +8,7 @@ namespace WebApp1.Core.Models.Support
   public class SupportTicketResponse
   {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [Column(TypeName = "nvarchar(max)")]
@@ -21,7 +21,7 @@ namespace WebApp1.Core.Models.Support
     public ApplicationUser User { get; set; }
 
     [Required]
-    public string TicketId { get; set; }
+    public int TicketId { get; set; }
 
     public SupportTicket Ticket { get; set; }
 

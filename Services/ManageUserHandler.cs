@@ -4,8 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using WebApp1.Controllers.Resources;
-using WebApp1.Core.Models;
+using WebApp1.Constants;
 
 namespace WebApp1.Services
 {
@@ -23,9 +22,9 @@ namespace WebApp1.Services
         string loggedInUserId = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
         var routeValues = this.httpContextAccessor.HttpContext.Request.RouteValues;
         object editedUserId;
-        routeValues.TryGetValue("id", out editedUserId);
+        routeValues.TryGetValue("userId", out editedUserId);
 
-        if (context.User.IsInRole(Roles.User.ToString()) && loggedInUserId.ToLower() == editedUserId.ToString().ToLower())
+        if (context.User.IsInRole(RolesEnum.User.ToString()) && loggedInUserId.ToLower() == editedUserId.ToString().ToLower())
         {
           context.Succeed(requirement);
         }

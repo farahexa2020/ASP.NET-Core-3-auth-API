@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -36,7 +34,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateRole(CreateRoleResource roleResource)
+    public async Task<IActionResult> CreateRole([FromBody] CreateRoleResource roleResource)
     {
       if (ModelState.IsValid)
       {
@@ -102,14 +100,14 @@ namespace WebApp1.Controllers
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteRole(string id)
+    [HttpDelete("{roleId}")]
+    public async Task<IActionResult> DeleteRole([FromRoute] string roleId)
     {
-      var role = await roleManager.FindByIdAsync(id);
+      var role = await roleManager.FindByIdAsync(roleId);
 
       if (role == null)
       {
-        ModelState.AddModelError("", $"Role with Id: ({id}) cannot be found");
+        ModelState.AddModelError("", $"Role with Id: ({roleId}) cannot be found");
         return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 

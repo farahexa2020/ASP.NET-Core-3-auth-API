@@ -6,9 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
-using WebApp1.Persistence;
-using WebApp1.Persistence.SupportRepositories;
+using WebApp1.Constants;
 
 namespace WebApp1.Services
 {
@@ -25,29 +23,29 @@ namespace WebApp1.Services
     {
       string loggedInUserId = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
-      //   try
-      //   {
-      var routeValues = this.httpContextAccessor.HttpContext.Request.RouteValues;
-      object editedTicketId;
-      routeValues.TryGetValue("ticketId", out editedTicketId);
-
-      using (var scope = this.serviceProvider.CreateScope())
+      try
       {
-        var ticketRepositorty = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
-        var ticket = ticketRepositorty.FindTicketByIdAsync(editedTicketId.ToString()).Result;
+        var routeValues = this.httpContextAccessor.HttpContext.Request.RouteValues;
+        object editedTicketId;
+        routeValues.TryGetValue("ticketId", out editedTicketId);
 
-        if (context.User.IsInRole(Roles.Admin.ToString()) ||
-              loggedInUserId == ticket.UserId ||
-              loggedInUserId == ticket.AssigneeId)
+        using (var scope = this.serviceProvider.CreateScope())
         {
-          context.Succeed(requirement);
+          var ticketRepositorty = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
+          var ticket = ticketRepositorty.FindTicketByIdAsync(Convert.ToInt32(editedTicketId)).Result;
+
+          if (context.User.IsInRole(RolesEnum.Admin.ToString()) ||
+                loggedInUserId == ticket.UserId ||
+                loggedInUserId == ticket.AssigneeId)
+          {
+            context.Succeed(requirement);
+          }
         }
       }
-      //   }
-      //   catch (Exception e)
-      //   {
-      //     return Task.CompletedTask;
-      //   }
+      catch (Exception e)
+      {
+        return Task.CompletedTask;
+      }
 
       return Task.CompletedTask;
     }

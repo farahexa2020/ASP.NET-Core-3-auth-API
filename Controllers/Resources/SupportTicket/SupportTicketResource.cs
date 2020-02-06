@@ -8,7 +8,7 @@ namespace WebApp1.Controllers.Resources.SupportTicket
 {
   public class SupportTicketResource
   {
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     public string Issue { get; set; }
 

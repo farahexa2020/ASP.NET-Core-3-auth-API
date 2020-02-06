@@ -1,8 +1,8 @@
 using AutoMapper;
 using WebApp1.Controllers.Resources;
 using WebApp1.Controllers.Resources.SupportTicket;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Mapping
 {

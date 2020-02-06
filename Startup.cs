@@ -1,16 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using WebApp1.Persistence;
@@ -26,6 +20,7 @@ using WebApp1.Middlewares;
 using WebApp1.Hubs;
 using WebApp1.Core.ISupportRepositories;
 using WebApp1.Persistence.SupportRepositories;
+using WebApp1.Constants;
 
 namespace WebApp1
 {
@@ -108,7 +103,10 @@ namespace WebApp1
       services.AddAuthorization(options =>
       {
         options.AddPolicy("AdminPolicy",
-                          policy => policy.RequireRole(Roles.Admin.ToString()));
+                          policy => policy.RequireRole(RolesEnum.Admin.ToString()));
+
+        options.AddPolicy("SupportPolicy",
+                          policy => policy.RequireRole(RolesEnum.Support.ToString()));
 
         options.AddPolicy("EditRolePolicy",
                           policy => policy.AddRequirements(new ManageAdminRolesRequiremnet()));
@@ -117,6 +115,9 @@ namespace WebApp1
                           policy => policy.AddRequirements(new ManageUserRequirements()));
 
         options.AddPolicy("SupportTicketResponsePolicy",
+                          policy => policy.AddRequirements(new SupportTicketResponseRequirements()));
+
+        options.AddPolicy("SupportTicketResponsePolicyAssign",
                           policy => policy.AddRequirements(new SupportTicketResponseRequirements()));
       });
 
@@ -143,6 +144,8 @@ namespace WebApp1
       services.AddScoped<ITicketTopicRepository, TicketTopicRepository>();
 
       services.AddScoped<INotificationRepository, NotificationRepository>();
+
+      services.AddScoped<ISettingsRepository, SettingsRepository>();
 
       services.AddSingleton<IAuthorizationHandler, ManageAdminRolesHandler>();
 

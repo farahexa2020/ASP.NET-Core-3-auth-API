@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
 using WebApp1.Extensions;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Persistence.SupportRepositories
 {
@@ -56,7 +56,7 @@ namespace WebApp1.Persistence.SupportRepositories
       return result; ;
     }
 
-    public async Task<SupportTicket> FindTicketByIdAsync(string id)
+    public async Task<SupportTicket> FindTicketByIdAsync(int id)
     {
       return await this.context.SupportTickets
                                 .Where(st => st.Id == id)
@@ -93,24 +93,27 @@ namespace WebApp1.Persistence.SupportRepositories
       this.context.Add(supportTicket);
     }
 
-    public async Task<QueryResult<SupportTicketResponse>> GetAllTicketResponsesAsync(string ticketId)
+    public async Task<QueryResult<SupportTicketResponse>> GetAllTicketResponsesAsync(int ticketId, SupportTicketResponseQuery queryObj)
     {
-      var items = this.context.SupportTicketResponses
+      var query = this.context.SupportTicketResponses
                           .Where(str => str.TicketId == ticketId)
                           .Include(str => str.User)
                           .ThenInclude(stru => stru.UserRoles)
                           .ThenInclude(strur => strur.Role)
-                          .OrderByDescending(str => str.PostedAt)
+                          .OrderBy(str => str.PostedAt)
                           .AsQueryable();
 
       var result = new QueryResult<SupportTicketResponse>();
-      result.TotalItems = await items.CountAsync();
-      result.Items = await items.ToListAsync();
+      result.TotalItems = await query.CountAsync();
+
+      query = query.ApplyPaging(queryObj);
+
+      result.Items = await query.ToListAsync();
 
       return result;
     }
 
-    public async Task<SupportTicketResponse> FindTicketResponseByIdAsync(string id)
+    public async Task<SupportTicketResponse> FindTicketResponseByIdAsync(int id)
     {
       return await this.context.SupportTicketResponses
                                 .Where(str => str.Id == id)
@@ -120,7 +123,7 @@ namespace WebApp1.Persistence.SupportRepositories
                                 .FirstOrDefaultAsync();
     }
 
-    public void PostTicketResponse(string ticketId, SupportTicketResponse supportTicketResponse)
+    public void PostTicketResponse(int ticketId, SupportTicketResponse supportTicketResponse)
     {
       this.context.SupportTicketResponses.Add(supportTicketResponse);
     }
@@ -137,17 +140,17 @@ namespace WebApp1.Persistence.SupportRepositories
         return query.Where(columnsMap[QueryFilter.UserId.ToString()]).AsQueryable();
       }
 
-      if (!string.IsNullOrWhiteSpace(queryObj.TopicId) && columnsMap.ContainsKey(QueryFilter.TopicId.ToString()))
+      if (queryObj.TopicId.HasValue && columnsMap.ContainsKey(QueryFilter.TopicId.ToString()))
       {
         return query.Where(columnsMap[QueryFilter.TopicId.ToString()]).AsQueryable();
       }
 
-      if (!string.IsNullOrWhiteSpace(queryObj.StatusId) && columnsMap.ContainsKey(QueryFilter.StatusId.ToString()))
+      if (queryObj.StatusId.HasValue && columnsMap.ContainsKey(QueryFilter.StatusId.ToString()))
       {
         return query.Where(columnsMap[QueryFilter.StatusId.ToString()]).AsQueryable();
       }
 
-      if (!string.IsNullOrWhiteSpace(queryObj.PriorityId) && columnsMap.ContainsKey(QueryFilter.PriorityId.ToString()))
+      if (queryObj.PriorityId.HasValue && columnsMap.ContainsKey(QueryFilter.PriorityId.ToString()))
       {
         return query.Where(columnsMap[QueryFilter.PriorityId.ToString()]).AsQueryable();
       }

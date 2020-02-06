@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApp1.Controllers.Resources.Bank;
 using WebApp1.Core.Models;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Core
 {

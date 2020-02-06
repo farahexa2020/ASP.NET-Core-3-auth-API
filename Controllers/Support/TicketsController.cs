@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -16,6 +15,8 @@ using WebApp1.Core.ISupportRepositories;
 using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
 using WebApp1.Hubs;
+using WebApp1.Constants;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Controllers
 {
@@ -72,16 +73,16 @@ namespace WebApp1.Controllers
       return new OkObjectResult(result);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetTicketById([FromRoute] string id)
+    [HttpGet("{ticketId}")]
+    public async Task<IActionResult> GetTicketById([FromRoute] int ticketId)
     {
       var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
       var user = await userManager.FindByIdAsync(loggedInUserId);
 
-      var ticket = await this.ticketRepository.FindTicketByIdAsync(id);
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
       if (ticket != null)
       {
-        if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
+        if (await this.userManager.IsInRoleAsync(user, RolesEnum.Admin.ToString()) ||
             loggedInUserId == ticket.UserId ||
             loggedInUserId == ticket.AssigneeId)
         {
@@ -93,7 +94,7 @@ namespace WebApp1.Controllers
         return new ForbidResult();
       }
 
-      ModelState.AddModelError("", $"Ticket with Id ({id}) not found!");
+      ModelState.AddModelError("", $"Ticket with Id ({ticketId}) not found!");
       return new NotFoundObjectResult(new NotFoundResource(ModelState));
     }
 
@@ -103,7 +104,7 @@ namespace WebApp1.Controllers
       var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
       var user = await userManager.FindByIdAsync(loggedInUserId);
 
-      if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
+      if (await this.userManager.IsInRoleAsync(user, RolesEnum.Admin.ToString()) ||
           loggedInUserId == userId)
       {
         var userTickets = await this.ticketRepository.GetAllUserTicketsAsync(userId);
@@ -158,19 +159,19 @@ namespace WebApp1.Controllers
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpGet("{id}/Response")]
-    public async Task<IActionResult> GetAllTicketResponses([FromRoute] string id)
+    [HttpGet("{ticketId}/Response")]
+    public async Task<IActionResult> GetAllTicketResponses([FromRoute] int ticketId, [FromQuery] SupportTicketResponseQuery queryObj)
     {
       var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
       var user = await userManager.FindByIdAsync(loggedInUserId);
 
-      var ticket = await this.ticketRepository.FindTicketByIdAsync(id);
+      var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
 
-      if (await this.userManager.IsInRoleAsync(user, Roles.Admin.ToString()) ||
+      if (await this.userManager.IsInRoleAsync(user, RolesEnum.Admin.ToString()) ||
             loggedInUserId == ticket.UserId ||
             loggedInUserId == ticket.AssigneeId)
       {
-        var responsesQuery = await this.ticketRepository.GetAllTicketResponsesAsync(id);
+        var responsesQuery = await this.ticketRepository.GetAllTicketResponsesAsync(ticketId, queryObj);
 
         var result = this.mapper.Map<QueryResult<SupportTicketResponse>, QueryResultResource<SupportTicketResponseResource>>(responsesQuery);
 
@@ -179,9 +180,10 @@ namespace WebApp1.Controllers
 
       return new ForbidResult();
     }
+
     [Authorize(Policy = "SupportTicketResponsePolicy")]
     [HttpPost("{ticketId}/Response")]
-    public async Task<IActionResult> PostResponse([FromRoute] string ticketId, [FromBody] CreateSupportTicketResponseResource CreateSupportTicketResponseResource)
+    public async Task<IActionResult> PostResponse([FromRoute] int ticketId, [FromBody] CreateSupportTicketResponseResource CreateSupportTicketResponseResource)
     {
       if (ModelState.IsValid)
       {
@@ -234,7 +236,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpPost("{ticketId}/Assign")]
-    public async Task<IActionResult> AssignTicket([FromRoute] string ticketId, [FromQuery] string supportId)
+    public async Task<IActionResult> AssignTicket([FromRoute] int ticketId, [FromQuery] string supportId)
     {
       var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
       if (ticket == null)
@@ -250,7 +252,7 @@ namespace WebApp1.Controllers
         return new NotFoundObjectResult(new NotFoundResource(ModelState));
       }
 
-      if (!await this.userManager.IsInRoleAsync(user, Roles.Support.ToString()))
+      if (!await this.userManager.IsInRoleAsync(user, RolesEnum.Support.ToString()))
       {
         ModelState.AddModelError("", $"User ({user.Id}) is Not a member of role Support!");
         return new BadRequestObjectResult(new BadRequestResource(ModelState));
@@ -271,7 +273,7 @@ namespace WebApp1.Controllers
     }
 
     [HttpDelete("{ticketId}/Assign")]
-    public async Task<IActionResult> UnassignTicket([FromRoute] string ticketId)
+    public async Task<IActionResult> UnassignTicket([FromRoute] int ticketId)
     {
       var ticket = await this.ticketRepository.FindTicketByIdAsync(ticketId);
       if (ticket == null)

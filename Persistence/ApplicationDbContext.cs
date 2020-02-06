@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +20,10 @@ namespace WebApp1.Persistence
     public DbSet<SupportTicketTopic> SupportTicketTopics { get; set; }
     public DbSet<SupportTicketStatus> SupportTicketStatuses { get; set; }
     public DbSet<SupportTicketPriority> SupportTicketPriorities { get; set; }
+    public DbSet<SupportTicketAssignmentMethod> SupportTicketAssignmentMethods { get; set; }
     public DbSet<SupportTicketResponse> SupportTicketResponses { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<ApplicationSettings> Settings { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

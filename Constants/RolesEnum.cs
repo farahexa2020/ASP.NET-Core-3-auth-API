@@ -1,6 +1,6 @@
-namespace WebApp1.Core.Models
+namespace WebApp1.Constants
 {
-  public enum Roles
+  public enum RolesEnum
   {
     Admin = 1,
     User = 2,

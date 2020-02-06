@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
-using WebApp1.Extensions;
 
 namespace WebApp1.Core.Models
 {

@@ -1,17 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApp1.Controllers.Resources;
 using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
+using WebApp1.Constants;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Controllers
 {
@@ -51,10 +49,10 @@ namespace WebApp1.Controllers
       return new OkObjectResult(response);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUserByIdAsync(string id)
+    [HttpGet("{userId}")]
+    public async Task<IActionResult> GetUserByIdAsync([FromRoute] string userId)
     {
-      var user = await this.userRepository.FindUserByIdAsync(id);
+      var user = await this.userRepository.FindUserByIdAsync(userId);
 
       if (user == null)
       {
@@ -83,7 +81,7 @@ namespace WebApp1.Controllers
 
         user = this.mapper.Map<RegisterUserResource, ApplicationUser>(registerUserResource);
 
-        var role = await roleManager.FindByNameAsync(Roles.User.ToString());
+        var role = await roleManager.FindByNameAsync(RolesEnum.User.ToString());
         if (role == null)
         {
           ModelState.AddModelError("", "Role not found");
@@ -114,14 +112,14 @@ namespace WebApp1.Controllers
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserResource updateUserResource, string id)
+    [HttpPut("{userId}")]
+    public async Task<IActionResult> UpdateUserAsync([FromRoute] string userId, [FromBody] UpdateUserResource updateUserResource)
     {
       var language = Request.Headers["Accept-Language"].ToString();
 
       if (ModelState.IsValid)
       {
-        var user = await this.userManager.FindByIdAsync(id);
+        var user = await this.userManager.FindByIdAsync(userId);
         if (user == null)
         {
           ModelState.AddModelError("", "User not found");
@@ -151,12 +149,12 @@ namespace WebApp1.Controllers
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUserAsync(string id)
+    [HttpDelete("{userId}")]
+    public async Task<IActionResult> DeleteUserAsync([FromRoute] string userId)
     {
       if (ModelState.IsValid)
       {
-        var user = await this.userManager.FindByIdAsync(id);
+        var user = await this.userManager.FindByIdAsync(userId);
         if (user == null)
         {
           ModelState.AddModelError("", "User not found");
@@ -185,12 +183,12 @@ namespace WebApp1.Controllers
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpPut("{id}/Activate")]
-    public async Task<IActionResult> ActivateUserAsync(string id)
+    [HttpPut("{userId}/Activate")]
+    public async Task<IActionResult> ActivateUserAsync([FromRoute] string userId)
     {
       if (ModelState.IsValid)
       {
-        var user = await this.userManager.FindByIdAsync(id);
+        var user = await this.userManager.FindByIdAsync(userId);
         if (user == null)
         {
           ModelState.AddModelError("", "User not found");

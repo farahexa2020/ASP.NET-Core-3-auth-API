@@ -1,16 +1,16 @@
 using WebApp1.Extensions;
 
-namespace WebApp1.Core.Models.Support
+namespace WebApp1.QueryModels
 {
   public class SupportTicketQuery : IQueryObject
   {
     public string UserId { get; set; }
 
-    public string TopicId { get; set; }
+    public int? TopicId { get; set; }
 
-    public string StatusId { get; set; }
+    public int? StatusId { get; set; }
 
-    public string PriorityId { get; set; }
+    public int? PriorityId { get; set; }
 
     public string SortBy { get; set; }
 

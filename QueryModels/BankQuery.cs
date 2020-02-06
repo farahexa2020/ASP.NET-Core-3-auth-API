@@ -1,16 +1,10 @@
 using WebApp1.Extensions;
 
-namespace WebApp1.Core.Models
+namespace WebApp1.QueryModels
 {
-  public class UserQuery : IQueryObject
+  public class BankQuery : IQueryObject
   {
-    public string FirstName { get; set; }
-
-    public string LastName { get; set; }
-
-    public string Email { get; set; }
-
-    public string RoleId { get; set; }
+    public string Name { get; set; }
 
     public bool? IsActive { get; set; }
 

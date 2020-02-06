@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -47,12 +46,12 @@ namespace WebApp1.Controllers
     }
 
     [Authorize(Policy = "UserPolicy")]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProfileAsync([FromRoute] string id, [FromBody] UpdateUserResource updateUserResource)
+    [HttpPut("{userId}")]
+    public async Task<IActionResult> UpdateProfileAsync([FromRoute] string userId, [FromBody] UpdateUserResource updateUserResource)
     {
       if (ModelState.IsValid)
       {
-        var user = await userManager.FindByIdAsync(id);
+        var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
           ModelState.AddModelError("", "User Not Found");
@@ -67,7 +66,7 @@ namespace WebApp1.Controllers
 
         if (result.Succeeded)
         {
-          var updatedUser = await userRepository.FindUserByIdAsync(id);
+          var updatedUser = await userRepository.FindUserByIdAsync(userId);
           var updatedUserResource = this.mapper.Map<ApplicationUser, UserResource>(updatedUser);
 
           return new OkObjectResult(updatedUserResource);
@@ -83,13 +82,13 @@ namespace WebApp1.Controllers
     }
 
     [Authorize(Policy = "UserPolicy")]
-    [HttpPost("{id}/AddPhoneNumber")]
+    [HttpPost("{userId}/AddPhoneNumber")]
     // [ValidateAntiForgeryToken]
-    public async Task<ActionResult> AddPhoneNumber([FromRoute] string id, [FromQuery] string phoneNumber)
+    public async Task<ActionResult> AddPhoneNumber([FromRoute] string userId, [FromQuery] string phoneNumber)
     {
       if (ModelState.IsValid)
       {
-        var user = await this.userManager.FindByIdAsync(id);
+        var user = await this.userManager.FindByIdAsync(userId);
         user.PhoneNumber = phoneNumber;
 
         var result = await this.userManager.UpdateAsync(user);
@@ -115,12 +114,12 @@ namespace WebApp1.Controllers
     }
 
     [Authorize(Policy = "UserPolicy")]
-    [HttpPost("{id}/VerifyPhoneNumber")]
-    public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string id, [FromBody] PhoneNumberConfirmationResource verifyPhoneNumberResource)
+    [HttpPost("{userId}/VerifyPhoneNumber")]
+    public async Task<ActionResult> VerifyPhoneNumber([FromRoute] string userId, [FromBody] PhoneNumberConfirmationResource verifyPhoneNumberResource)
     {
       if (ModelState.IsValid)
       {
-        var user = await this.userManager.FindByIdAsync(id);
+        var user = await this.userManager.FindByIdAsync(userId);
 
         var result = await this.userManager.ChangePhoneNumberAsync(
           user,

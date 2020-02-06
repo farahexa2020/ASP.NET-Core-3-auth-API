@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ using WebApp1.Controllers.Resources;
 using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 using WebApp1.Core.Models;
+using WebApp1.Constants;
 
 namespace WebApp1.Controllers
 {
@@ -52,7 +52,7 @@ namespace WebApp1.Controllers
       {
         var user = mapper.Map<RegisterUserResource, ApplicationUser>(userResource);
 
-        var role = await roleManager.FindByNameAsync(Roles.User.ToString());
+        var role = await roleManager.FindByNameAsync(RolesEnum.User.ToString());
         if (role == null)
         {
           ModelState.AddModelError("", "Role not found");

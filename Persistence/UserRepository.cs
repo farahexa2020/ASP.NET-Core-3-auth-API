@@ -4,11 +4,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core;
 using WebApp1.Core.Models;
 using WebApp1.Extensions;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Persistence
 {

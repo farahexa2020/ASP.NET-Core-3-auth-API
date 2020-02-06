@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -11,8 +8,8 @@ using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Controllers.Support
 {
@@ -43,10 +40,10 @@ namespace WebApp1.Controllers.Support
       return new OkObjectResult(result);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> FindTicketTopicById([FromRoute] string id)
+    [HttpGet("{ticketPriorityId}")]
+    public async Task<IActionResult> FindTicketTopicById([FromRoute] int ticketPriorityId)
     {
-      var ticketPriority = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(id);
+      var ticketPriority = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(ticketPriorityId);
 
       if (ticketPriority == null)
       {
@@ -71,11 +68,8 @@ namespace WebApp1.Controllers.Support
         }
 
         var supportTicketTopic = this.mapper.Map<CreateSupportTicketPriorityResource, SupportTicketPriority>(createSupportTicketPriorityReource);
-        supportTicketTopic.CreatedAt = DateTime.Now;
-        supportTicketTopic.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        supportTicketTopic.CreatedBy = loggedInUserId;
 
         this.ticketPriorityRepository.CreateTicketPriority(supportTicketTopic);
 
@@ -87,12 +81,12 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTicketTopic([FromRoute] string id, [FromBody] CreateSupportTicketPriorityResource createSupportTicketPriorityResource)
+    [HttpPut("{ticketPriorityId}")]
+    public async Task<IActionResult> UpdateTicketTopic([FromRoute] int ticketPriorityId, [FromBody] CreateSupportTicketPriorityResource createSupportTicketPriorityResource)
     {
       if (ModelState.IsValid)
       {
-        var ticketTopic = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(id);
+        var ticketTopic = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(ticketPriorityId);
 
         if (ticketTopic == null)
         {
@@ -102,14 +96,13 @@ namespace WebApp1.Controllers.Support
 
         if (this.ticketPriorityRepository.IsPriorityUpdatedNameExist(
             createSupportTicketPriorityResource.Name,
-            id))
+            ticketPriorityId))
         {
           ModelState.AddModelError("", $"Ticket priority with name ({createSupportTicketPriorityResource.Name}) is already exist!");
           return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketPriorityResource, SupportTicketPriority>(createSupportTicketPriorityResource, ticketTopic);
-        ticketTopic.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -123,10 +116,10 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTicketTopic([FromRoute] string id)
+    [HttpDelete("{ticketPriorityId}")]
+    public async Task<IActionResult> DeleteTicketTopic([FromRoute] int ticketPriorityId)
     {
-      var ticketTopic = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(id);
+      var ticketTopic = await this.ticketPriorityRepository.FindTicketPriorityByIdAsync(ticketPriorityId);
 
       if (ticketTopic == null)
       {

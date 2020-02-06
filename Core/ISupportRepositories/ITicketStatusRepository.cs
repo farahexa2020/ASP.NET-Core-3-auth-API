@@ -1,17 +1,16 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Core.ISupportRepositories
 {
   public interface ITicketStatusRepository
   {
-    Task<SupportTicketStatus> FindTicketStatusByIdAsync(string id);
+    Task<SupportTicketStatus> FindTicketStatusByIdAsync(int id);
 
     bool IsStatusExist(string statusName);
 
-    bool IsStatusUpdatedNameExist(string statusName, string updatedStatusId);
+    bool IsStatusUpdatedNameExist(string statusName, int updatedStatusId);
 
     Task<QueryResult<SupportTicketStatus>> GetTicketStatusesAsync();
 

@@ -5,7 +5,7 @@ namespace WebApp1.Controllers.Resources.SupportTicket
 {
   public class CreateSupportTicketResource
   {
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [Column(TypeName = "nvarchar(max)")]
@@ -15,12 +15,12 @@ namespace WebApp1.Controllers.Resources.SupportTicket
     public string UserId { get; set; }
 
     [Required]
-    public string TopicId { get; set; }
+    public int TopicId { get; set; }
 
     [Required]
-    public string StatusId { get; set; }
+    public int StatusId { get; set; }
 
     [Required]
-    public string PriorityId { get; set; }
+    public int PriorityId { get; set; }
   }
 }

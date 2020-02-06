@@ -1,13 +1,9 @@
 using WebApp1.Extensions;
 
-namespace WebApp1.Core.Models
+namespace WebApp1.QueryModels
 {
-  public class BankQuery : IQueryObject
+  public class SupportTicketResponseQuery : IQueryObject
   {
-    public string Name { get; set; }
-
-    public bool? IsActive { get; set; }
-
     public string SortBy { get; set; }
 
     public bool? IsSortAscending { get; set; }

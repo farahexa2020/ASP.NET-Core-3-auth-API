@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace WebApp1.Core.Models
+namespace WebApp1.QueryModels
 {
   public class QueryResult<T>
   {

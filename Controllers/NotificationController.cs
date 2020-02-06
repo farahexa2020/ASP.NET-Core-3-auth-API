@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Core;
 
 namespace WebApp1.Controllers.Resources

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -11,8 +8,8 @@ using WebApp1.Controllers.Resources.ApiError;
 using WebApp1.Controllers.Resources.SupportTicket;
 using WebApp1.Core;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Controllers.Support
 {
@@ -44,10 +41,10 @@ namespace WebApp1.Controllers.Support
       return new OkObjectResult(result);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> FindTicketStatusById([FromRoute] string id)
+    [HttpGet("{ticketStatusId}")]
+    public async Task<IActionResult> FindTicketStatusById([FromRoute] int ticketStatusId)
     {
-      var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(id);
+      var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(ticketStatusId);
 
       if (ticketStatus == null)
       {
@@ -72,11 +69,8 @@ namespace WebApp1.Controllers.Support
         }
 
         var supportTicketStatus = this.mapper.Map<CreateSupportTicketStatusResource, SupportTicketStatus>(createSupportTicketStatusResource);
-        supportTicketStatus.CreatedAt = DateTime.Now;
-        supportTicketStatus.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        supportTicketStatus.CreatedBy = loggedInUserId;
 
         this.ticketStatusRepository.CreateTicketStatus(supportTicketStatus);
 
@@ -88,12 +82,12 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTicketStatus([FromRoute] string id, [FromBody] CreateSupportTicketStatusResource createSupportTicketStatusResource)
+    [HttpPut("{ticketStatusId}")]
+    public async Task<IActionResult> UpdateTicketStatus([FromRoute] int ticketStatusId, [FromBody] CreateSupportTicketStatusResource createSupportTicketStatusResource)
     {
       if (ModelState.IsValid)
       {
-        var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(id);
+        var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(ticketStatusId);
 
         if (ticketStatus == null)
         {
@@ -103,17 +97,15 @@ namespace WebApp1.Controllers.Support
 
         if (this.ticketStatusRepository.IsStatusUpdatedNameExist(
             createSupportTicketStatusResource.Name,
-            id))
+            ticketStatusId))
         {
           ModelState.AddModelError("", $"Ticket status with name ({createSupportTicketStatusResource.Name}) is already exist!");
           return new BadRequestObjectResult(new BadRequestResource(ModelState));
         }
 
         this.mapper.Map<CreateSupportTicketStatusResource, SupportTicketStatus>(createSupportTicketStatusResource, ticketStatus);
-        ticketStatus.UpdatedAt = DateTime.Now;
 
         var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        ticketStatus.CreatedBy = loggedInUserId;
 
         this.ticketStatusRepository.UpdateTicketStatus(ticketStatus);
 
@@ -125,10 +117,10 @@ namespace WebApp1.Controllers.Support
       return new BadRequestObjectResult(new BadRequestResource(ModelState));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTicketStatus([FromRoute] string id)
+    [HttpDelete("{ticketStatusId}")]
+    public async Task<IActionResult> DeleteTicketStatus([FromRoute] int ticketStatusId)
     {
-      var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(id);
+      var ticketStatus = await this.ticketStatusRepository.FindTicketStatusByIdAsync(ticketStatusId);
 
       if (ticketStatus == null)
       {

@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Core.ISupportRepositories
 {
@@ -9,17 +8,17 @@ namespace WebApp1.Core.ISupportRepositories
   {
     Task<QueryResult<SupportTicket>> GetAllTicketsAsync(SupportTicketQuery supportTicketQuery);
 
-    Task<SupportTicket> FindTicketByIdAsync(string id);
+    Task<SupportTicket> FindTicketByIdAsync(int id);
 
     Task<QueryResult<SupportTicket>> GetAllUserTicketsAsync(string userId);
 
     void CreateTicket(SupportTicket supportTicket);
 
-    Task<QueryResult<SupportTicketResponse>> GetAllTicketResponsesAsync(string ticketId);
+    Task<QueryResult<SupportTicketResponse>> GetAllTicketResponsesAsync(int ticketId, SupportTicketResponseQuery queryObj);
 
-    Task<SupportTicketResponse> FindTicketResponseByIdAsync(string id);
+    Task<SupportTicketResponse> FindTicketResponseByIdAsync(int id);
 
-    void PostTicketResponse(string ticketId, SupportTicketResponse supportTicketResponse);
+    void PostTicketResponse(int ticketId, SupportTicketResponse supportTicketResponse);
 
     void UpdateTicket(SupportTicket supportTicket);
   }

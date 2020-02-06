@@ -5,7 +5,7 @@ namespace WebApp1.Controllers.Resources.SupportTicket
 {
   public class CreateSupportTicketResponseResource
   {
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [Column(TypeName = "nvarchar(max)")]

@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebApp1.Core.ISupportRepositories;
-using WebApp1.Core.Models;
 using WebApp1.Core.Models.Support;
+using WebApp1.QueryModels;
 
 namespace WebApp1.Persistence
 {
@@ -16,7 +15,7 @@ namespace WebApp1.Persistence
       this.context = context;
     }
 
-    public async Task<SupportTicketTopic> FindTicketTopicByIdAsync(string id)
+    public async Task<SupportTicketTopic> FindTicketTopicByIdAsync(int id)
     {
       return await this.context.SupportTicketTopics.Where(stt => stt.Id == id).SingleOrDefaultAsync();
     }
@@ -26,7 +25,7 @@ namespace WebApp1.Persistence
       return this.context.SupportTicketTopics.Select(stt => stt.Name).ToList().Contains(topicName);
     }
 
-    public bool IsTopicUpdatedNameExist(string topicName, string updatedTopicId)
+    public bool IsTopicUpdatedNameExist(string topicName, int updatedTopicId)
     {
       return this.context.SupportTicketTopics
                             .Where(stt => stt.Id != updatedTopicId)

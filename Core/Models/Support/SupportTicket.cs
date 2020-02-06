@@ -9,7 +9,7 @@ namespace WebApp1.Core.Models.Support
   public class SupportTicket
   {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public string Id { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [Column(TypeName = "nvarchar(max)")]
@@ -26,17 +26,17 @@ namespace WebApp1.Core.Models.Support
     public ApplicationUser Assignee { get; set; }
 
     [Required]
-    public string TopicId { get; set; }
+    public int TopicId { get; set; }
 
     public SupportTicketTopic Topic { get; set; }
 
     [Required]
-    public string StatusId { get; set; }
+    public int StatusId { get; set; }
 
     public SupportTicketStatus Status { get; set; }
 
     [Required]
-    public string PriorityId { get; set; }
+    public int PriorityId { get; set; }
 
     public SupportTicketPriority Priority { get; set; }
 
